@@ -178,9 +178,9 @@ class BitcoinMainnet(AbstractNet):
         return None
 
 
-class PalladiumMainnet(AbstractNet):
+class Palladium(AbstractNet):
 
-    NET_NAME = "palladium_mainnet"
+    NET_NAME = "palladium"
     TESTNET = False
     WIF_PREFIX = 0x80
     ADDRTYPE_P2PKH = 55  # Addresses start with 'P'
@@ -301,4 +301,4 @@ assert len(NETS_LIST) == len(set([chain.cli_flag() for chain in NETS_LIST])), "c
 assert len(NETS_LIST) == len(set([chain.config_key() for chain in NETS_LIST])), "config_key must be unique for each concrete AbstractNet"
 
 # don't import net directly, import the module instead (so that net is singleton)
-net = PalladiumMainnet  # type: Type[AbstractNet]
+net = Palladium  # type: Type[AbstractNet]
