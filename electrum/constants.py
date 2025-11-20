@@ -178,6 +178,40 @@ class BitcoinMainnet(AbstractNet):
         return None
 
 
+class PalladiumMainnet(AbstractNet):
+
+    NET_NAME = "palladium_mainnet"
+    TESTNET = False
+    WIF_PREFIX = 0x80
+    ADDRTYPE_P2PKH = 55  # Addresses start with 'P'
+    ADDRTYPE_P2SH = 5    # Addresses start with '3'
+    SEGWIT_HRP = "plm"
+    BOLT11_HRP = SEGWIT_HRP
+    GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+    DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+    BLOCK_HEIGHT_FIRST_LIGHTNING_CHANNELS = 0  # Lightning not active yet
+
+    XPRV_HEADERS = {
+        'standard':    0x0488ade4,  # xprv
+        'p2wpkh-p2sh': 0x049d7878,  # yprv
+        'p2wsh-p2sh':  0x0295b005,  # Yprv
+        'p2wpkh':      0x04b2430c,  # zprv
+        'p2wsh':       0x02aa7a99,  # Zprv
+    }
+    XPRV_HEADERS_INV = inv_dict(XPRV_HEADERS)
+    XPUB_HEADERS = {
+        'standard':    0x0488b21e,  # xpub
+        'p2wpkh-p2sh': 0x049d7cb2,  # ypub
+        'p2wsh-p2sh':  0x0295b43f,  # Ypub
+        'p2wpkh':      0x04b24746,  # zpub
+        'p2wsh':       0x02aa7ed3,  # Zpub
+    }
+    XPUB_HEADERS_INV = inv_dict(XPUB_HEADERS)
+    BIP44_COIN_TYPE = 5701  # Palladium coin type
+    LN_REALM_BYTE = 0
+    LN_DNS_SEEDS = []  # Lightning DNS seeds not configured yet
+
+
 class BitcoinTestnet(AbstractNet):
 
     NET_NAME = "testnet"
