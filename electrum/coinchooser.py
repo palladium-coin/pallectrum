@@ -167,7 +167,7 @@ class CoinChooserBase(Logger):
     def _change_amounts(self, tx: PartialTransaction, count: int, fee_estimator_numchange) -> List[int]:
         # Break change up if bigger than max_change
         output_amounts = [o.value for o in tx.outputs()]
-        # Don't split change of less than 0.02 BTC
+        # Don't split change of less than 0.02 PLM
         max_change = max([0.02 * COIN] + output_amounts) * 1.25
 
         # Use N change outputs
@@ -516,7 +516,7 @@ class CoinChooserPrivacy(CoinChooserRandom):
                     badness += 1
             elif change > max_change:
                 badness += (change - max_change) / (max_change + 10000)
-                # Penalize large change; 5 BTC excess ~= using 1 more input
+                # Penalize large change; 5 PLM excess ~= using 1 more input
                 badness += change / (COIN * 5)
             return ScoredCandidate(badness, tx, buckets)
 

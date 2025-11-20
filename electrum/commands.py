@@ -880,7 +880,7 @@ class Commands(Logger):
 
         arg:str:privkey:Private key. Type \'?\' to get a prompt.
         arg:str:destination:Bitcoin address, contact or alias
-        arg:str:fee:Transaction fee (absolute, in BTC)
+        arg:str:fee:Transaction fee (absolute, in PLM)
         arg:str:feerate:Transaction fee rate (in sat/vbyte)
         arg:int:imax:Maximum number of inputs
         arg:bool:nocheck:Do not verify aliases
@@ -944,8 +944,8 @@ class Commands(Logger):
         """Create an on-chain transaction.
 
         arg:str:destination:Bitcoin address, contact or alias
-        arg:decimal_or_max:amount:Amount to be sent (in BTC). Type '!' to send the maximum available.
-        arg:decimal:fee:Transaction fee (absolute, in BTC)
+        arg:decimal_or_max:amount:Amount to be sent (in PLM). Type '!' to send the maximum available.
+        arg:decimal:fee:Transaction fee (absolute, in PLM)
         arg:float:feerate:Transaction fee rate (in sat/vbyte)
         arg:str:from_addr:Source address (must be a wallet address; use sweep to spend from non-wallet address)
         arg:str:change_addr:Change address. Default is a spare address, or the source address if it's not in the wallet
@@ -977,9 +977,9 @@ class Commands(Logger):
                         nocheck=False, unsigned=False, rbf=True, password=None, locktime=None, addtransaction=False, wallet: Abstract_Wallet = None):
         """Create a multi-output transaction.
 
-        arg:json:outputs:json list of ["address", "amount in BTC"]
+        arg:json:outputs:json list of ["address", "amount in PLM"]
         arg:bool:rbf:Whether to signal opt-in Replace-By-Fee in the transaction (true/false)
-        arg:str:fee:Transaction fee (absolute, in BTC)
+        arg:str:fee:Transaction fee (absolute, in PLM)
         arg:str:feerate:Transaction fee rate (in sat/vbyte)
         arg:str:from_addr:Source address (must be a wallet address; use sweep to spend from non-wallet address)
         arg:str:change_addr:Change address. Default is a spare address, or the source address if it's not in the wallet
@@ -1740,8 +1740,8 @@ class Commands(Logger):
         Open a lightning channel with a peer
 
         arg:str:connection_string:Lightning network node ID or network address
-        arg:decimal_or_max:amount:funding amount (in BTC)
-        arg:decimal:push_amount:Push initial amount (in BTC)
+        arg:decimal_or_max:amount:funding amount (in PLM)
+        arg:decimal:push_amount:Push initial amount (in PLM)
         arg:bool:public:The channel will be announced
         arg:bool:zeroconf:request zeroconf channel
         """
@@ -1975,7 +1975,7 @@ class Commands(Logger):
 
         arg:str:from_scid:Short channel ID
         arg:str:dest_scid:Short channel ID
-        arg:decimal:amount:Amount (in BTC)
+        arg:decimal:amount:Amount (in PLM)
 
         """
         from .lnutil import ShortChannelID
@@ -2023,10 +2023,10 @@ class Commands(Logger):
     @command('wnpl')
     async def normal_swap(self, onchain_amount, lightning_amount, password=None, wallet: Abstract_Wallet = None):
         """
-        Normal submarine swap: send on-chain BTC, receive on Lightning
+        Normal submarine swap: send on-chain PLM, receive on Lightning
 
-        arg:decimal_or_dryrun:lightning_amount:Amount to be received, in BTC. Set it to 'dryrun' to receive a value
-        arg:decimal_or_dryrun:onchain_amount:Amount to be sent, in BTC. Set it to 'dryrun' to receive a value
+        arg:decimal_or_dryrun:lightning_amount:Amount to be received, in PLM. Set it to 'dryrun' to receive a value
+        arg:decimal_or_dryrun:onchain_amount:Amount to be sent, in PLM. Set it to 'dryrun' to receive a value
         """
         sm = wallet.lnworker.swap_manager
         assert self.config.SWAPSERVER_NPUB or self.config.SWAPSERVER_URL, \
@@ -2067,8 +2067,8 @@ class Commands(Logger):
         """
         Reverse submarine swap: send on Lightning, receive on-chain
 
-        arg:decimal_or_dryrun:lightning_amount:Amount to be sent, in BTC. Set it to 'dryrun' to receive a value
-        arg:decimal_or_dryrun:onchain_amount:Amount to be received, in BTC. Set it to 'dryrun' to receive a value
+        arg:decimal_or_dryrun:lightning_amount:Amount to be sent, in PLM. Set it to 'dryrun' to receive a value
+        arg:decimal_or_dryrun:onchain_amount:Amount to be received, in PLM. Set it to 'dryrun' to receive a value
         arg:decimal_or_dryrun:prepayment:Lightning payment required by the swap provider in order to cover their mining fees. This is included in lightning_amount. However, this part of the operation is not trustless; the provider is trusted to fail this payment if the swap fails.
         """
         sm = wallet.lnworker.swap_manager
@@ -2127,9 +2127,9 @@ class Commands(Logger):
         to_ccy = to_ccy.upper()
         # Default currencies
         if from_ccy == '':
-            from_ccy = "BTC" if to_ccy != "BTC" else self.daemon.fx.ccy
+            from_ccy = "PLM" if to_ccy != "PLM" else self.daemon.fx.ccy
         if to_ccy == '':
-            to_ccy = "BTC" if from_ccy != "BTC" else self.daemon.fx.ccy
+            to_ccy = "PLM" if from_ccy != "PLM" else self.daemon.fx.ccy
         # Get current rates
         rate_from = self.daemon.fx.exchange.get_cached_spot_quote(from_ccy)
         rate_to = self.daemon.fx.exchange.get_cached_spot_quote(to_ccy)
