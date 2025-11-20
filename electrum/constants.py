@@ -79,9 +79,13 @@ class AbstractNet:
     XPRV_HEADERS_INV: Mapping[int, str]
     XPUB_HEADERS: Mapping[str, int]
     XPUB_HEADERS_INV: Mapping[int, str]
+    SKIP_POW_DIFFICULTY_VALIDATION: bool = False  # Skip difficulty bits validation (e.g., for LWMA chains)
 
     @classmethod
     def max_checkpoint(cls) -> int:
+        # Checkpoints are indexed by chunk number (0, 1, 2, ...)
+        # Each chunk ends at height: (chunk + 1) * 2016 - 1
+        # So max checkpoint height = (num_checkpoints) * 2016 - 1
         return max(0, len(cls.CHECKPOINTS) * 2016 - 1)
 
     @classmethod
@@ -210,6 +214,7 @@ class Palladium(AbstractNet):
     BIP44_COIN_TYPE = 746  # Palladium coin type (SLIP-0044 registered)
     LN_REALM_BYTE = 0
     LN_DNS_SEEDS = []  # Lightning DNS seeds not configured yet
+    SKIP_POW_DIFFICULTY_VALIDATION = True  # Palladium uses LWMA, not Bitcoin's difficulty algo
 
 
 class BitcoinTestnet(AbstractNet):
