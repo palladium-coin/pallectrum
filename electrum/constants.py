@@ -207,7 +207,7 @@ class PalladiumMainnet(AbstractNet):
         'p2wsh':       0x02aa7ed3,  # Zpub
     }
     XPUB_HEADERS_INV = inv_dict(XPUB_HEADERS)
-    BIP44_COIN_TYPE = 5701  # Palladium coin type
+    BIP44_COIN_TYPE = 746  # Palladium coin type (SLIP-0044 registered)
     LN_REALM_BYTE = 0
     LN_DNS_SEEDS = []  # Lightning DNS seeds not configured yet
 
