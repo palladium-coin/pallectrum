@@ -20,7 +20,7 @@ from .lnurl import (decode_lnurl, request_lnurl, callback_lnurl, LNURLError,
 from .bitcoin import opcodes, construct_script
 from .lnaddr import LnInvoiceException
 from .lnutil import IncompatibleOrInsaneFeatures
-from .bip21 import parse_bip21_URI, InvalidBitcoinURI, LIGHTNING_URI_SCHEME, BITCOIN_BIP21_URI_SCHEME
+from .bip21 import parse_bip21_URI, InvalidBitcoinURI, LIGHTNING_URI_SCHEME, BITCOIN_BIP21_URI_SCHEME, PALLADIUM_BIP21_URI_SCHEME
 from . import paymentrequest
 
 if TYPE_CHECKING:
@@ -245,7 +245,7 @@ class PaymentIdentifier(Logger):
                     self.logger.debug(f'Exception cause {e.args!r}')
                     return
                 self.set_state(PaymentIdentifierState.AVAILABLE)
-        elif text.lower().startswith(BITCOIN_BIP21_URI_SCHEME + ':'):
+        elif text.lower().startswith(BITCOIN_BIP21_URI_SCHEME + ':') or text.lower().startswith(PALLADIUM_BIP21_URI_SCHEME + ':'):
             try:
                 out = parse_bip21_URI(text)
             except InvalidBitcoinURI as e:

@@ -10,6 +10,7 @@ from .lnaddr import lndecode, LnDecodeException
 
 # note: when checking against these, use .lower() to support case-insensitivity
 BITCOIN_BIP21_URI_SCHEME = 'bitcoin'
+PALLADIUM_BIP21_URI_SCHEME = 'palladium'
 LIGHTNING_URI_SCHEME = 'lightning'
 
 
@@ -29,8 +30,8 @@ def parse_bip21_URI(uri: str) -> dict:
         return {'address': uri}
 
     u = urllib.parse.urlparse(uri)
-    if u.scheme.lower() != BITCOIN_BIP21_URI_SCHEME:
-        raise InvalidBitcoinURI("Not a bitcoin URI")
+    if u.scheme.lower() != PALLADIUM_BIP21_URI_SCHEME:
+        raise InvalidBitcoinURI("Not a palladium URI")
     address = u.path
 
     # python for android fails to parse query
@@ -120,7 +121,7 @@ def create_bip21_uri(addr, amount_sat: Optional[int], message: Optional[str],
         v = urllib.parse.quote(v)
         query.append(f"{k}={v}")
     p = urllib.parse.ParseResult(
-        scheme=BITCOIN_BIP21_URI_SCHEME,
+        scheme=PALLADIUM_BIP21_URI_SCHEME,
         netloc='',
         path=addr,
         params='',
