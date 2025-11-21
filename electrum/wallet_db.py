@@ -96,7 +96,7 @@ class DBMetadata(StoredObject):
         if ts is None or ver is None:
             return "unknown"
         date_str = datetime.date.fromtimestamp(ts).isoformat()
-        return f"using {ver}, on {date_str}"
+        return f"using Pallectrum {ver}, on {date_str}"
 
 
 # note: subclassing WalletFileException for some specific cases
