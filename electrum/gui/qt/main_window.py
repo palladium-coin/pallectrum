@@ -297,15 +297,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger, QtEventListener):
 
         self.contacts.fetch_openalias(self.config)
 
-        # If the option hasn't been set yet
-        if not config.cv.AUTOMATIC_CENTRALIZED_UPDATE_CHECKS.is_set():
-            choice = self.question(title="Electrum - " + _("Enable update check"),
-                                   msg=_("For security reasons we advise that you always use the latest version of Electrum.") + " " +
-                                       _("Would you like to be notified when there is a newer version of Electrum available?"))
-            config.AUTOMATIC_CENTRALIZED_UPDATE_CHECKS = bool(choice)
-
+        # Update checks disabled for Pallectrum
         self._update_check_thread = None
-        if config.AUTOMATIC_CENTRALIZED_UPDATE_CHECKS:
+        if False and config.AUTOMATIC_CENTRALIZED_UPDATE_CHECKS:
             # The references to both the thread and the window need to be stored somewhere
             # to prevent GC from getting in our way.
             def on_version_received(v):
