@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 
 ################################## transactions
 
-COINBASE_MATURITY = 100
+COINBASE_MATURITY = 120  # Palladium coinbase maturity (blocks)
 COIN = 100000000
 TOTAL_COIN_SUPPLY_LIMIT_IN_BTC = 21000000
 

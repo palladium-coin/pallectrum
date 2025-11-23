@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Network connection logic to support Palladium blockchain
 - Transaction validation rules for Palladium consensus
 - Fee estimation adapted to Palladium network conditions
+- Coinbase maturity increased to 120 blocks (from Bitcoin's 100)
 
 ### Fixed
 - **Android (QML) GUI critical fixes**
