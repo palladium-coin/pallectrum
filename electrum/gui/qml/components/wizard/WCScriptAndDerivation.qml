@@ -71,15 +71,15 @@ WizardComponent {
         var scripttype = scripttypegroup.checkedButton.scripttype
         if (isMultisig) {
             if (scripttype == 'p2sh')
-                derivationpathtext.text = "m/" + p[scripttype] + "'/0"
+                derivationpathtext.text = "m/" + p[scripttype] + "'/746'"
             else
                 derivationpathtext.text = "m/" + p[scripttype] + "'/"
-                + (Network.isTestNet ? 1 : 0) + "'/0'/"
+                + (Network.isTestNet ? 1 : 746) + "'/0'/"
                 + (scripttype == 'p2wsh' ? 2 : 1) + "'"
         } else {
             derivationpathtext.text =
                 "m/" + p[scripttypegroup.checkedButton.scripttype] + "'/"
-                + (Network.isTestNet ? 1 : 0) + "'/0'"
+                + (Network.isTestNet ? 1 : 746) + "'/0'"
         }
     }
 
