@@ -40,6 +40,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Transaction validation rules for Palladium consensus
 - Fee estimation adapted to Palladium network conditions
 
+### Fixed
+- **Android (QML) GUI critical fixes**
+  - Fixed QR code scanning crash due to hardcoded "BTC" unit reference
+  - Fixed hardcoded Bitcoin derivation paths (coin type 0 → 746 for Palladium)
+  - Fixed BIP21 URI scheme (bitcoin → palladium)
+  - Fixed QR code URL encoding to use palladium scheme
+- **Complete Android/QML rebranding**
+  - Updated all user-visible "Electrum" references to "Pallectrum"
+  - Fixed network name display (shows "Palladium Mainnet" instead of "Mainnet")
+  - Updated wallet wizard, preferences, error dialogs, and help texts
+  - Fixed "Import Bitcoin addresses" to "Import Palladium addresses"
+- **Qt (Desktop) GUI rebranding**
+  - Updated application name, tray tooltip, and exit menu
+  - Fixed notification branding
+  - Updated chart labels (BTC → PLM)
+- **Balance unit display**
+  - Fixed amount regex validator to use PLM instead of BTC
+  - Updated preferences text for thousands separators
+
 ### Security
 - Will merge relevant security fixes from Electrum upstream as needed
 
@@ -146,5 +165,5 @@ For understanding upstream Electrum changes:
 
 ---
 
-**Last Updated**: 2025-11-20
+**Last Updated**: 2025-11-23
 **Maintained by**: Davide Grilli
