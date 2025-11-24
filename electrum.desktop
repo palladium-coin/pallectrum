@@ -1,23 +1,23 @@
-# If you want Electrum to appear in a Linux app launcher ("start menu"), install this by doing:
+# If you want Pallectrum to appear in a Linux app launcher ("start menu"), install this by doing:
 # sudo desktop-file-install electrum.desktop
 # Note: This assumes $HOME/.local/bin is in your $PATH
 
 [Desktop Entry]
-Comment=Lightweight Bitcoin Client
+Comment=Lightweight Palladium Client
 Exec=electrum %u
-GenericName[en_US]=Bitcoin Wallet
-GenericName=Bitcoin Wallet
+GenericName[en_US]=Palladium Wallet
+GenericName=Palladium Wallet
 Icon=electrum
-Name[en_US]=Electrum Bitcoin Wallet
-Name=Electrum Bitcoin Wallet
+Name[en_US]=Pallectrum Wallet
+Name=Pallectrum Wallet
 Categories=Finance;Network;
 StartupNotify=true
 StartupWMClass=electrum
 Terminal=false
 Type=Application
-MimeType=x-scheme-handler/bitcoin;x-scheme-handler/lightning;
+MimeType=x-scheme-handler/palladium;x-scheme-handler/lightning;
 Actions=Testnet;
-Keywords=crypto;currency;BTC
+Keywords=crypto;currency;PLM;palladium
 
 [Desktop Action Testnet]
 Exec=electrum --testnet %u

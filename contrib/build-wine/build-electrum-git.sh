@@ -1,7 +1,7 @@
 #!/bin/bash
 
-NAME_ROOT=electrum
-PROJECT_ROOT="$WINEPREFIX/drive_c/electrum"
+NAME_ROOT=pallectrum
+PROJECT_ROOT="$WINEPREFIX/drive_c/pallectrum"
 
 export PYTHONDONTWRITEBYTECODE=1  # don't create __pycache__/ folders with .pyc files
 
