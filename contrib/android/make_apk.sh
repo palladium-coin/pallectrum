@@ -51,7 +51,7 @@ if [[ "$3" == "release" ]] ; then
     TARGET="release"
     export P4A_RELEASE_KEYSTORE_PASSWD="$4"
     export P4A_RELEASE_KEYALIAS_PASSWD="$4"
-    export P4A_RELEASE_KEYSTORE=~/.keystore
+    export P4A_RELEASE_KEYSTORE=~/.keystore/pallectrum.keystore
     export P4A_RELEASE_KEYALIAS=pallectrum
     if [ -z "$P4A_RELEASE_KEYSTORE_PASSWD" ] || [ -z "$P4A_RELEASE_KEYALIAS_PASSWD" ]; then
         echo "p4a password not defined"
