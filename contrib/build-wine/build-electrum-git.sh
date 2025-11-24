@@ -74,7 +74,7 @@ info "building NSIS installer"
 makensis -DPRODUCT_VERSION=$VERSION electrum.nsi
 
 cd dist
-mv electrum-setup.exe $NAME_ROOT-$VERSION-setup.exe
+mv pallectrum-setup.exe $NAME_ROOT-$VERSION-setup.exe
 cd ..
 
 info "Padding binaries to 8-byte boundaries, and fixing COFF image checksum in PE header"
@@ -119,4 +119,4 @@ EOF
     done
 )
 
-sha256sum dist/electrum*.exe
+sha256sum dist/pallectrum*.exe
