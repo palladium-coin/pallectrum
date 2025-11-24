@@ -1,3 +1,5 @@
+=== Original Electrum Authors ===
+
 ThomasV - Creator and maintainer.
 Animazing / Tachikoma - Styled the new GUI. Mac version.
 Azelphur - GUI stuff.
@@ -11,3 +13,7 @@ Slush - Work on the server. Designed the original Stratum spec.
 Julian Toash (Tuxavant) - Various fixes to the client.
 rdymac - Website and translations.
 kyuupichan - Miscellaneous.
+
+=== Pallectrum (Palladium Fork) ===
+
+Davide Grilli - Pallectrum maintainer and Palladium integration.
