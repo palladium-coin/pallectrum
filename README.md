@@ -1,155 +1,141 @@
-# Electrum - Lightweight Bitcoin client
+# Pallectrum - Lightweight Palladium Wallet
 
 ```
 Licence: MIT Licence
-Author: Thomas Voegtlin
+Version: 0.1.0
+Maintainer: Davide Grilli
 Language: Python (>= 3.10)
-Homepage: https://electrum.org/
+Homepage: https://github.com/palladium-coin/pallectrum
 ```
 
-[![Build Status](https://api.cirrus-ci.com/github/spesmilo/electrum.svg?branch=master)](https://cirrus-ci.com/github/spesmilo/electrum)
-[![Test coverage statistics](https://coveralls.io/repos/github/spesmilo/electrum/badge.svg?branch=master)](https://coveralls.io/github/spesmilo/electrum?branch=master)
-[![Help translate Electrum online](https://d322cqt584bo4o.cloudfront.net/electrum/localized.svg)](https://crowdin.com/project/electrum)
+[![Licence](https://img.shields.io/badge/license-MIT-blue.svg)](LICENCE)
+[![Based on Electrum](https://img.shields.io/badge/based%20on-Electrum%204.6.2-green.svg)](https://github.com/spesmilo/electrum)
 
 
-## Getting started
+## About
 
-_(If you've come here looking to simply run Electrum,
-[you may download it here](https://electrum.org/#download).)_
+Pallectrum is a lightweight Palladium wallet based on [Electrum](https://electrum.org/), the popular Bitcoin wallet. It offers the same ease of use, security features, and extensibility that Electrum is known for, but adapted for the Palladium blockchain.
 
-Electrum itself is pure Python, and so are most of the required dependencies,
-but not everything. The following sections describe how to run from source, but here
-is a TL;DR:
+### Key Features
 
-```
-$ sudo apt-get install libsecp256k1-dev
-$ ELECTRUM_ECC_DONT_COMPILE=1 python3 -m pip install --user ".[gui,crypto]"
-```
+- **Instant on**: Your wallet is ready to use immediately - no blockchain download required
+- **Secure**: Your private keys are encrypted and never leave your computer
+- **Forgiving**: Your funds can be recovered from a secret seed phrase
+- **Cold Storage**: Keep your private keys offline and transact using a watching-only wallet
+- **Multi-signature support**: Split the permission to spend your coins between several wallets
+- **Hardware wallet support**: Compatible with popular hardware wallets (Trezor, Ledger, etc.)
+- **Lightning Network**: Fast and low-cost payments (experimental)
 
-### Not pure-python dependencies
+### Based on Electrum
 
-#### Qt GUI
+Pallectrum is a fork of Electrum v4.6.2, adapted to work with the Palladium blockchain. For the original Electrum documentation, see [README-ELECTRUM.md](README-ELECTRUM.md).
 
-If you want to use the Qt interface, install the Qt dependencies:
-```
-$ sudo apt-get install python3-pyqt6
-```
-
-#### libsecp256k1
-
-For elliptic curve operations,
-[libsecp256k1](https://github.com/bitcoin-core/secp256k1)
-is a required dependency.
-
-If you "pip install" Electrum, by default libsecp will get compiled locally,
-as part of the `electrum-ecc` dependency. This can be opted-out of,
-by setting the `ELECTRUM_ECC_DONT_COMPILE=1` environment variable.
-For the compilation to work, besides a C compiler, you need at least:
-```
-$ sudo apt-get install automake libtool
-```
-If you opt out of the compilation, you need to provide libsecp in another way, e.g.:
-```
-$ sudo apt-get install libsecp256k1-dev
-```
-
-#### cryptography
-
-Due to the need for fast symmetric ciphers,
-[cryptography](https://github.com/pyca/cryptography) is required.
-Install from your package manager (or from pip):
-```
-$ sudo apt-get install python3-cryptography
-```
-
-#### hardware-wallet support
-
-If you would like hardware wallet support,
-[see this](https://github.com/spesmilo/electrum-docs/blob/master/hardware-linux.rst).
+**Credits**: Pallectrum is based on [Electrum](https://github.com/spesmilo/electrum) by Thomas Voegtlin and contributors. We are grateful for their excellent work.
 
 
-### Running from tar.gz
+## Getting Started
 
-If you downloaded the official package (tar.gz), you can run
-Electrum from its root directory without installing it on your
-system; all the pure python dependencies are included in the 'packages'
-directory. To run Electrum from its root directory, just do:
-```
-$ ./run_electrum
-```
+### Installation
 
-You can also install Electrum on your system, by running this command:
-```
-$ sudo apt-get install python3-setuptools python3-pip
-$ python3 -m pip install --user .
-```
+The easiest way to run Pallectrum is to download the pre-built binaries:
 
-This will download and install the Python dependencies used by
-Electrum instead of using the 'packages' directory.
-It will also place an executable named `electrum` in `~/.local/bin`,
-so make sure that is on your `PATH` variable.
+- **Windows**: Download `pallectrum-x.x.x-setup.exe`
+- **Linux**: Download `pallectrum-x.x.x-x86_64.AppImage`
+- **Android**: Download `pallectrum-x.x.x.apk`
 
+### Running from Source
 
-### Development version (git clone)
+If you want to run Pallectrum from source, you'll need Python 3.10 or higher.
 
-_(For OS-specific instructions, see [here for Windows](contrib/build-wine/README_windows.md),
-and [for macOS](contrib/osx/README_macos.md))_
+#### Quick Start (Linux/macOS)
 
-Check out the code from GitHub:
-```
-$ git clone https://github.com/spesmilo/electrum.git
-$ cd electrum
-$ git submodule update --init
-```
-
-Run install (this should install dependencies):
-```
+```bash
+$ sudo apt-get install libsecp256k1-dev python3-pyqt6
+$ git clone https://github.com/palladium-coin/pallectrum.git
+$ cd pallectrum
 $ python3 -m pip install --user -e .
-```
-
-Create translations (optional):
-```
-$ sudo apt-get install gettext
-$ ./contrib/locale/build_locale.sh electrum/locale/locale electrum/locale/locale
-```
-
-Finally, to start Electrum:
-```
 $ ./run_electrum
 ```
 
-### Run tests
+For detailed installation instructions, including dependencies and platform-specific notes, see the [original Electrum documentation](README-ELECTRUM.md#getting-started).
 
-Run unit tests with `pytest`:
+
+## Building Binaries
+
+Pallectrum includes Docker-based build systems for reproducible builds:
+
+- **Windows**: See [contrib/build-wine/README.md](contrib/build-wine/README.md)
+- **Linux (AppImage)**: See [contrib/build-linux/appimage/README.md](contrib/build-linux/appimage/README.md)
+- **Android**: See [contrib/android/Readme.md](contrib/android/Readme.md)
+
+### Quick Build (Windows with Docker)
+
+```bash
+$ cd contrib/build-wine
+$ ./build.sh
+# Output: dist/pallectrum-<version>-setup.exe
 ```
+
+
+## Configuration
+
+Pallectrum stores wallet data and configuration in:
+
+- **Windows**: `C:\Users\<username>\AppData\Roaming\Pallectrum`
+- **Linux/macOS**: `~/.pallectrum`
+- **Android**: `<internal storage>/Pallectrum`
+
+
+## Palladium-Specific Features
+
+Pallectrum includes specific adaptations for the Palladium blockchain:
+
+- BIP21 URI scheme: `palladium:` (instead of `bitcoin:`)
+- BIP44 coin type: 746
+- Default block explorer: https://explorer.palladium-coin.com/
+- Currency unit: PLM (Palladium) instead of BTC
+- Checkpoint-based validation (compatible with LWMA difficulty algorithm)
+
+
+## Development
+
+### Running Tests
+
+```bash
 $ pytest tests -v
 ```
 
-To run a single file, specify it directly like this:
-```
-$ pytest tests/test_bitcoin.py -v
-```
+### Project Structure
 
-## Creating Binaries
+Pallectrum maintains the same structure as Electrum:
 
-- [Linux (tarball)](contrib/build-linux/sdist/README.md)
-- [Linux (AppImage)](contrib/build-linux/appimage/README.md)
-- [macOS](contrib/osx/README.md)
-- [Windows](contrib/build-wine/README.md)
-- [Android](contrib/android/Readme.md)
+- `electrum/` - Core wallet library (note: directory name kept for compatibility)
+- `contrib/` - Build scripts and utilities
+- `tests/` - Unit and integration tests
 
 
 ## Contributing
 
-Any help testing the software, reporting or fixing bugs, reviewing pull requests
-and recent changes, writing tests, or helping with outstanding issues is very welcome.
-Implementing new features, or improving/refactoring the codebase, is of course
-also welcome, but to avoid wasted effort, especially for larger changes,
-we encourage discussing these on the issue tracker or IRC first.
+Contributions are welcome! Please feel free to submit pull requests or open issues on GitHub.
 
-Besides [GitHub](https://github.com/spesmilo/electrum),
-most communication about Electrum development happens on IRC, in the
-`#electrum` channel on Libera Chat. The easiest way to participate on IRC is
-with the web client, [web.libera.chat](https://web.libera.chat/#electrum).
+For Pallectrum-specific issues:
+- Repository: https://github.com/palladium-coin/pallectrum
 
-Please improve translations on [Crowdin](https://crowdin.com/project/electrum).
+For general Electrum-related questions:
+- Original project: https://github.com/spesmilo/electrum
+
+
+## Licence
+
+Pallectrum is released under the terms of the MIT Licence. See [LICENCE](LICENCE) for more information.
+
+This project is based on Electrum, which is also released under the MIT Licence.
+Copyright (C) 2011-2024 Thomas Voegtlin and contributors
+
+
+## Links
+
+- **Palladium Explorer**: https://explorer.palladium-coin.com/
+- **GitHub Repository**: https://github.com/palladium-coin/pallectrum
+- **Original Electrum**: https://electrum.org/
+- **Electrum Documentation**: [README-ELECTRUM.md](README-ELECTRUM.md)
