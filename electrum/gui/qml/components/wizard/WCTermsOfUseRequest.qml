@@ -21,11 +21,11 @@ WizardComponent {
 
             Image {
                 Layout.fillWidth: true
+                Layout.preferredHeight: 150
+                Layout.leftMargin: -constants.paddingLarge
+                Layout.rightMargin: -constants.paddingLarge
                 fillMode: Image.PreserveAspectFit
                 source: Qt.resolvedUrl('../../../icons/electrum_presplash.png')
-                // reduce spacing a bit
-                Layout.topMargin: -100
-                Layout.bottomMargin: -200
             }
 
             Label {
