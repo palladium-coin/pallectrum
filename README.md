@@ -47,14 +47,76 @@ The easiest way to run Pallectrum is to download the pre-built binaries:
 
 If you want to run Pallectrum from source, you'll need Python 3.10 or higher.
 
-#### Quick Start (Linux/macOS)
+#### Windows
+
+**Prerequisites:**
+
+- Python 3.10+ installed from [python.org](https://www.python.org/downloads/)
+
+**Setup with Virtual Environment:**
+
+```powershell
+# Clone repository
+git clone https://github.com/palladium-coin/pallectrum.git
+cd pallectrum
+
+# Create and activate virtual environment
+python -m venv env
+env\Scripts\Activate.ps1
+
+# Upgrade pip and install dependencies
+python -m pip install --upgrade pip
+pip install -e ".[gui,crypto]"
+
+# Copy libsecp256k1 DLL (if needed)
+copy libsecp256k1*.dll env\Lib\site-packages\electrum_ecc\
+
+# Run with Qt GUI
+python run_electrum
+```
+
+##### Optional: QML GUI on Windows (simulates Android interface)
+
+```powershell
+pip install ".[qml_gui]"
+python run_electrum gui -g qml
+```
+
+#### Linux (Ubuntu/Debian)
+
+**Install Prerequisites:**
 
 ```bash
-$ sudo apt-get install libsecp256k1-dev python3-pyqt6
-$ git clone https://github.com/palladium-coin/pallectrum.git
-$ cd pallectrum
-$ python3 -m pip install --user -e .
-$ ./run_electrum
+# System packages
+sudo apt update
+sudo apt install -y python3-venv python3-pip build-essential python3-dev
+sudo apt install -y libffi-dev libssl-dev libsecp256k1-dev
+```
+
+**Setup with Virtual Environment:**
+
+```bash
+# Clone repository
+git clone https://github.com/palladium-coin/pallectrum.git
+cd pallectrum
+
+# Create and activate virtual environment
+python3 -m venv env
+source env/bin/activate
+
+# Upgrade pip and install dependencies
+python3 -m pip install --upgrade pip
+pip install -e ".[gui,crypto]"
+
+# Run with Qt GUI
+python run_electrum
+```
+
+##### Optional: QML GUI on Linux (simulates Android interface)
+
+```bash
+pip install ".[qml_gui]"
+python run_electrum gui -g qml
 ```
 
 For detailed installation instructions, including dependencies and platform-specific notes, see the [original Electrum documentation](README-ELECTRUM.md#getting-started).
@@ -123,6 +185,10 @@ For Pallectrum-specific issues:
 
 For general Electrum-related questions:
 - Original project: https://github.com/spesmilo/electrum
+
+### Development Notes
+
+Development of Pallectrum was supported by **Claude 4.5 Sonnet** (Anthropic AI) for code analysis, debugging, refactoring, and documentation assistance.
 
 
 ## Licence

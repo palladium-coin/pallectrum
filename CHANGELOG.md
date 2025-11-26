@@ -169,6 +169,8 @@ This is the initial fork of Electrum for the Palladium blockchain project.
 - **QR codes**: Generate correct palladium: URIs
 - **Network status**: Shows "Palladium" instead of "Bitcoin"
 - **Update check**: Disabled automatic update prompts on startup
+- **Terms of Use wizard**: Fixed presplash image layout with proper sizing and edge-to-edge display
+- **Watch-only wallet warning**: Replaced "Bitcoin" with "Palladium"
 
 ### Security
 - Checkpoint-based validation provides security for blocks with LWMA difficulty
@@ -179,6 +181,10 @@ This is the initial fork of Electrum for the Palladium blockchain project.
 - Bitcoin-specific features incompatible with Palladium
 - References to bitcoin.org and electrum.org in user-facing text
 - Automatic update checking (to avoid confusion with Electrum updates)
+
+### Development Notes
+
+- Development supported by Claude 4.5 Sonnet (Anthropic AI) for code analysis, debugging, and documentation assistance
 
 ---
 
