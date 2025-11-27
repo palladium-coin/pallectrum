@@ -93,7 +93,7 @@ class TestHeaderChainResolution(ElectrumTestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        constants.BitcoinMainnet.set_as_network()
+        constants.Palladium.set_as_network()
 
     def tearDown(self):
         blockchain.blockchains = {}

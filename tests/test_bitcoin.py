@@ -497,7 +497,7 @@ class Test_bitcoin(ElectrumTestCase):
         self.assertEqual(address_to_script('tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c', net=constants.BitcoinTestnet).hex(), '5120000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433')
 
         # invalid addresses (from BIP-0173)
-        for net in [constants.BitcoinMainnet, constants.BitcoinTestnet]:
+        for net in [constants.Palladium, constants.BitcoinTestnet]:
             self.assertFalse(is_address('tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty', net=net))
             self.assertFalse(is_address('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5', net=net))
             self.assertFalse(is_address('BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2', net=net))
@@ -510,7 +510,7 @@ class Test_bitcoin(ElectrumTestCase):
             self.assertFalse(is_address('bc1gmk9yu', net=net))
 
         # invalid addresses (from BIP-0350)
-        for net in [constants.BitcoinMainnet, constants.BitcoinTestnet]:
+        for net in [constants.Palladium, constants.BitcoinTestnet]:
             self.assertFalse(is_address('tc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq5zuyut', net=net))
             self.assertFalse(is_address('bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqh2y7hd', net=net))
             self.assertFalse(is_address('tb1z0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqglt7rf', net=net))

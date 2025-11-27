@@ -55,7 +55,7 @@ class ElectrumTestCase(unittest.IsolatedAsyncioTestCase, Logger):
     def tearDownClass(cls):
         super().tearDownClass()
         if cls.TESTNET or cls.REGTEST:
-            constants.BitcoinMainnet.set_as_network()
+            constants.Palladium.set_as_network()
 
     def setUp(self):
         have_lock = self._test_lock.acquire(timeout=0.1)
