@@ -253,47 +253,12 @@ class BitcoinTestnet(AbstractNet):
     ]
 
 
-class BitcoinTestnet4(BitcoinTestnet):
-
-    NET_NAME = "testnet4"
-    GENESIS = "00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043"
-    LN_DNS_SEEDS = []
-
-
 class BitcoinRegtest(BitcoinTestnet):
 
     NET_NAME = "regtest"
     SEGWIT_HRP = "bcrt"
     BOLT11_HRP = SEGWIT_HRP
     GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
-    LN_DNS_SEEDS = []
-
-
-class BitcoinSimnet(BitcoinTestnet):
-
-    NET_NAME = "simnet"
-    WIF_PREFIX = 0x64
-    ADDRTYPE_P2PKH = 0x3f
-    ADDRTYPE_P2SH = 0x7b
-    SEGWIT_HRP = "sb"
-    BOLT11_HRP = SEGWIT_HRP
-    GENESIS = "683e86bd5c6d110d91b94b97137ba6bfe02dbbdb8e3dff722a669b5d69d77af6"
-    LN_DNS_SEEDS = []
-
-
-class BitcoinSignet(BitcoinTestnet):
-
-    NET_NAME = "signet"
-    BOLT11_HRP = "tbs"
-    GENESIS = "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
-    LN_DNS_SEEDS = []
-
-
-class BitcoinMutinynet(BitcoinTestnet):
-
-    NET_NAME = "mutinynet"
-    BOLT11_HRP = "tbs"
-    GENESIS = "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
     LN_DNS_SEEDS = []
 
 

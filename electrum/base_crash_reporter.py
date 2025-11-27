@@ -92,8 +92,6 @@ class BaseCrashReporter(Logger):
         if (constants.net.GENESIS[-4:] not in [
             "e26f",  # mainnet
             "4943",  # testnet 3
-            "f043",  # testnet 4
-            "1ef6",  # signet
         ] and ".electrum.org" in BaseCrashReporter.report_server):
             # Gah! Some kind of altcoin wants to send us crash reports.
             raise Exception(_("Missing report URL."))
