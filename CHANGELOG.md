@@ -18,6 +18,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - TBD
+
+### Technical Cleanup and Optimization
+
+#### Removed - Bitcoin Chain and Related References
+- **Complete removal of Bitcoin chain infrastructure**
+  - Removed Bitcoin testnet4, signet, mutinynet, and simnet network definitions
+  - Deleted `chains/mainnet/` directory (servers, checkpoints, fallback nodes)
+  - Removed Bitcoin-specific trampoline Lightning nodes configuration
+  - Removed Bitcoin-specific block explorers (testnet4, signet)
+  - Cleaned up Ledger hardware wallet plugin (removed signet chain mapping)
+  - Updated crash reporter whitelist (removed testnet4, signet genesis hashes)
+- **Test suite cleanup**
+  - Updated all test files to use Palladium as default network instead of BitcoinMainnet
+  - Modified 5 test files (tests/__init__.py, test_blockchain.py, test_bitcoin.py, test_psbt.py, test_network.py)
+  - Removed BitcoinMainnet references from test loops and teardown methods
+- **Code optimization**
+  - Removed superfluous modules, functions, and files inherited from Electrum
+  - Minor code fixes and optimizations throughout the codebase
+  - Light refactoring to simplify and streamline the codebase
+
+#### Changed - UI/UX Improvements
+- **Visual assets update**
+  - Updated wallet images, icons, and graphical resources
+  - Improved overall visual consistency and branding
+- **User interface enhancements**
+  - Improved layout, text clarity, and UI element positioning
+  - Better visual hierarchy and component spacing
+  - Enhanced user experience across all platforms
+
+#### Added - Documentation and Testnet Support
+- **User documentation**
+  - Added comprehensive user guide: `user-guide.md`
+  - Improved in-app help and documentation
+- **Official testnet integration**
+  - Configured Palladium testnet parameters (ports, magic bytes, genesis hash)
+  - Added dedicated Electrum testnet server
+  - Testnet infrastructure ready for development and testing
+
+### Development Notes
+- Continued development support by Claude 4.5 Sonnet (Anthropic AI)
+- Focus on code quality, maintainability, and user experience
+
+---
+
 ## [0.1.0] - 2025-11-24
 
 ### Initial Fork Release
