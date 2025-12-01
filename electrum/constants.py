@@ -217,20 +217,20 @@ class Palladium(AbstractNet):
     SKIP_POW_DIFFICULTY_VALIDATION = True  # Palladium uses LWMA, not Bitcoin's difficulty algo
 
 
-class BitcoinTestnet(AbstractNet):
+class PalladiumTestnet(AbstractNet):
 
     NET_NAME = "testnet"
     TESTNET = True
-    WIF_PREFIX = 0xef
-    ADDRTYPE_P2PKH = 111
-    ADDRTYPE_P2SH = 196
-    SEGWIT_HRP = "tb"
+    WIF_PREFIX = 0xff  # 255 from base58Prefixes[SECRET_KEY]
+    ADDRTYPE_P2PKH = 127  # base58Prefixes[PUBKEY_ADDRESS]
+    ADDRTYPE_P2SH = 115  # base58Prefixes[SCRIPT_ADDRESS]
+    SEGWIT_HRP = "tplm"
     BOLT11_HRP = SEGWIT_HRP
     GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
-    DEFAULT_PORTS = {'t': '51001', 's': '51002'}
+    DEFAULT_PORTS = {'t': '50001', 's': '50002'}
 
     XPRV_HEADERS = {
-        'standard':    0x04358394,  # tprv
+        'standard':    0x04358394,  # tprv - from base58Prefixes[EXT_SECRET_KEY]
         'p2wpkh-p2sh': 0x044a4e28,  # uprv
         'p2wsh-p2sh':  0x024285b5,  # Uprv
         'p2wpkh':      0x045f18bc,  # vprv
@@ -238,7 +238,7 @@ class BitcoinTestnet(AbstractNet):
     }
     XPRV_HEADERS_INV = inv_dict(XPRV_HEADERS)
     XPUB_HEADERS = {
-        'standard':    0x043587cf,  # tpub
+        'standard':    0x043587cf,  # tpub - from base58Prefixes[EXT_PUBLIC_KEY]
         'p2wpkh-p2sh': 0x044a5262,  # upub
         'p2wsh-p2sh':  0x024289ef,  # Upub
         'p2wpkh':      0x045f1cf6,  # vpub
@@ -247,13 +247,15 @@ class BitcoinTestnet(AbstractNet):
     XPUB_HEADERS_INV = inv_dict(XPUB_HEADERS)
     BIP44_COIN_TYPE = 1
     LN_REALM_BYTE = 1
-    LN_DNS_SEEDS = [  # TODO investigate this again
-        #'test.nodes.lightning.directory.',  # times out.
-        #'lseed.bitcoinstats.com.',  # ignores REALM byte and returns mainnet peers...
-    ]
+    LN_DNS_SEEDS = []  # No DNS seeds for Palladium testnet
+    SKIP_POW_DIFFICULTY_VALIDATION = True  # Palladium uses LWMA, not Bitcoin's difficulty algo
 
 
-class BitcoinRegtest(BitcoinTestnet):
+# Alias for backwards compatibility
+BitcoinTestnet = PalladiumTestnet
+
+
+class BitcoinRegtest(PalladiumTestnet):
 
     NET_NAME = "regtest"
     SEGWIT_HRP = "bcrt"
