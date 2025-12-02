@@ -2,7 +2,7 @@
 
 ```
 Licence: MIT Licence
-Version: 0.1.0
+Version: 0.2.0
 Maintainer: Davide Grilli
 Language: Python (>= 3.10)
 Homepage: https://github.com/palladium-coin/pallectrum
