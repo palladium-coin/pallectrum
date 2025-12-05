@@ -122,6 +122,18 @@ python run_electrum gui -g qml
 For detailed installation instructions, including dependencies and platform-specific notes, see the [original Electrum documentation](README-ELECTRUM.md#getting-started).
 
 
+## User Guide
+
+For a comprehensive guide on how to use Pallectrum, including wallet creation, sending/receiving transactions, backup procedures, and advanced features, please refer to the **[User Guide](user-guide.md)**.
+
+The guide covers:
+- Creating and restoring wallets
+- Sending and receiving Palladium
+- Wallet backup and security best practices
+- Advanced features (multi-signature, hardware wallets, etc.)
+- Troubleshooting common issues
+
+
 ## Building Binaries
 
 Pallectrum includes Docker-based build systems for reproducible builds:
