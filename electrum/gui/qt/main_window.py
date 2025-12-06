@@ -842,11 +842,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger, QtEventListener):
             about_action.setMenuRole(QAction.MenuRole.AboutRole)  # make sure OS recognizes it as "About"
             self.help_menu.addAction(about_action)
         self.help_menu.addAction(_("&Check for updates"), self.show_update_check)
-        self.help_menu.addAction(_("&Official website"), lambda: webopen("https://electrum.org"))
+        self.help_menu.addAction(_("&Official website"), lambda: webopen("https://github.com/palladium-coin/pallectrum"))
         self.help_menu.addSeparator()
-        self.help_menu.addAction(_("&Documentation"), lambda: webopen("http://docs.electrum.org/")).setShortcut(QKeySequence.StandardKey.HelpContents)
+        self.help_menu.addAction(_("&Documentation"), lambda: webopen("https://github.com/palladium-coin/pallectrum/blob/main/user-guide.md")).setShortcut(QKeySequence.StandardKey.HelpContents)
         if not constants.net.TESTNET:
-            self.help_menu.addAction(_("&Bitcoin Paper"), self.show_bitcoin_paper)
+            self.help_menu.addAction(_("&White Paper"), lambda: webopen("https://github.com/palladium-coin/palladiumcore/blob/master/assets/whitepaper/(original)whitepaper.pdf"))
         self.help_menu.addAction(_("&Report Bug"), self.show_report_bug)
         self.help_menu.addSeparator()
         self.help_menu.addAction(_("&Donate to server"), self.donate_to_server)
