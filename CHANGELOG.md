@@ -18,6 +18,120 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.0] - 2025-12-07
+
+### Overview
+This release introduces critical bug fixes for the Android QML app and updates to terminology and documentation to reflect Pallectrum instead of Electrum.
+
+### Critical Bug Fixes (Android QML)
+
+#### 1. Fix: Real-time balance updates
+
+**Issue resolved**: The Android app balance was not updating in real-time when transactions received confirmations or when coinbase rewards became mature (120 blocks). Users had to close and restart the app to see the correct balance.
+
+**Root Cause**:
+- Missing `balanceChanged` signal emission when a transaction changed height (received blockchain confirmations)
+- Missing handler for `blockchain_updated` event that notifies new blocks and coinbase maturation
+
+**Implemented changes**:
+
+a) **Fix for transaction confirmations**
+   - File: `electrum/gui/qml/qewallet.py:211`
+   - Added `self.balanceChanged.emit()` in `on_event_adb_tx_height_changed`
+
+b) **Fix for coinbase maturity**
+   - File: `electrum/gui/qml/qewallet.py:245-250`
+   - Added new handler `on_event_blockchain_updated()`
+   - Emits `balanceChanged` when new blocks arrive
+
+c) **Debug logging**
+   - File: `electrum/gui/qml/components/controls/BalanceSummary.qml:178`
+   - Added console.log to track balance updates
+
+**Impact**:
+- Balance updates automatically when transactions receive confirmations
+- Mining rewards (coinbase) appear automatically after 120 confirmations
+- No longer necessary to restart the app to see correct balance
+- Better user experience for miners
+
+#### 2. Fix: Typo correction in BalanceDetails.qml
+
+**Issue resolved**: "Lightning swap" button was causing QML runtime errors.
+
+**Root Cause**: Typo in QEAmount property - used `.satInt` instead of `.satsInt`
+
+**Modified file**: `electrum/gui/qml/components/BalanceDetails.qml:217`
+
+### Terminology and Documentation Updates
+
+#### 3. Payment request text updates
+- Replaced "Bitcoin/Electrum" references with "Palladium/Pallectrum"
+- File: ReceiveTab - Request expiration section
+- Changes:
+  - "bitcoin addresses" → "Palladium addresses"
+  - "electrum wallets" → "Pallectrum wallet"
+  - "Bitcoin address" → "Palladium address"
+
+#### 4. Preferences → Units update
+- Thousands separator checkbox: "bitcoin" → "Palladium"
+
+#### 5. Official website link updates
+- Links now point to Pallectrum GitHub repository instead of electrum.org
+
+#### 6. Whitepaper link updates
+- "Bitcoin whitepaper" references updated to reflect Palladium
+- Links to project documentation on GitHub
+
+#### 7. Windows builds documentation
+- Added README.md with description of two Windows versions:
+  - `pallectrum-x.x.x-portable.exe` - Recommended for USB drives
+  - `pallectrum-x.x.x-setup.exe` - Standalone installer
+
+#### 8. Help menu cleanup
+- Removed "Check for updates" menu item that referenced Electrum update servers
+- File: `electrum/gui/qt/main_window.py` (lines 844, 897-898)
+- Reason: Update checker pointed to `https://electrum.org/version` which is not appropriate for Pallectrum
+
+### Technical Details
+
+**Balance update architecture**:
+- Pattern: Event-driven reactive updates
+- Thread-safe via `@qt_event_listener` decorator
+- Zero overhead (signal emission is O(1))
+- No polling - completely event-driven
+
+**Performance**:
+- CPU: O(1) per signal emit
+- Memory: No increase
+- Battery: No impact (rare events, ~1 every 10 minutes)
+- Network: No additional traffic
+
+**Event frequency**:
+- `adb_tx_height_changed`: Only when wallet TX receives confirmations
+- `blockchain_updated`: ~1 time every 10 minutes (new block)
+
+### Upgrade
+
+**For existing users**:
+- No data migration required
+- Existing wallets 100% compatible
+- No reconfiguration needed
+
+**What will change**:
+- Balance updates automatically (no more restarts)
+- Terminology updated to Palladium/Pallectrum
+
+### Testing
+
+**Tests performed**:
+- New TX received → Balance updated
+- TX receives confirmations → Balance from unconfirmed to confirmed
+- Coinbase matures (120 confirmations) → Reward appears automatically
+- Lightning swap button → Works correctly
+- No redundant updates
+
+---
+
 ## [0.2.0] - 2025-12-04
 
 ### Technical Cleanup and Optimization

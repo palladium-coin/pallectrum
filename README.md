@@ -2,7 +2,7 @@
 
 ```
 Licence: MIT Licence
-Version: 0.2.0
+Version: 0.9.0
 Maintainer: Davide Grilli
 Language: Python (>= 3.10)
 Homepage: https://github.com/palladium-coin/pallectrum
@@ -39,7 +39,9 @@ Pallectrum is a fork of Electrum v4.6.2, adapted to work with the Palladium bloc
 
 The easiest way to run Pallectrum is to download the pre-built binaries:
 
-- **Windows**: Download `pallectrum-x.x.x-setup.exe`
+- **Windows**: Two versions available:
+  - `pallectrum-x.x.x-portable.exe` - **Recommended for USB drives**. Saves all data (wallets, configuration) in the same directory as the executable. Perfect for portable installations.
+  - `pallectrum-x.x.x-setup.exe` - Standalone installer. Installs to Program Files and saves data in `%APPDATA%\Pallectrum`.
 - **Linux**: Download `pallectrum-x.x.x-x86_64.AppImage`
 - **Android**: Download `pallectrum-x.x.x.apk`
 
