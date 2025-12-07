@@ -207,7 +207,8 @@ class QEWallet(AuthMixin, QObject, QtEventListener):
     def on_event_adb_tx_height_changed(self, adb, txid, old_height, new_height):
         if adb == self.wallet.adb:
             self._logger.info(f'tx_height_changed {txid}. {old_height} -> {new_height}')
-            self.historyModel.setDirty()  # assuming wallet.is_up_to_date triggers after
+            self.historyModel.setDirty()
+            self.balanceChanged.emit()  # Update balance when transaction height changes (confirmations)
 
     @qt_event_listener
     def on_event_removed_transaction(self, wallet, tx):
@@ -240,6 +241,13 @@ class QEWallet(AuthMixin, QObject, QtEventListener):
         if wallet == self.wallet:
             self.balanceChanged.emit()
             self.peersUpdated.emit()
+
+    @event_listener
+    def on_event_blockchain_updated(self):
+        # Emit balanceChanged when new block arrives because:
+        # 1. Coinbase outputs might have matured (COINBASE_MATURITY = 120 blocks)
+        # 2. Transaction confirmations increased
+        self.balanceChanged.emit()
 
     @qt_event_listener
     def on_event_payment_succeeded(self, wallet, key):

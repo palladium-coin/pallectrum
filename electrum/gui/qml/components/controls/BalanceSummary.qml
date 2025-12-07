@@ -175,6 +175,7 @@ Item {
     Connections {
         target: Daemon.currentWallet
         function onBalanceChanged() {
+            console.log("BalanceSummary: balanceChanged signal received - updating balances")
             setBalances()
         }
     }
