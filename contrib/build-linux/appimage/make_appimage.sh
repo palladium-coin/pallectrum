@@ -3,13 +3,14 @@
 set -e
 
 PROJECT_ROOT="$(dirname "$(readlink -e "$0")")/../../.."
+PROJECT_ROOT_OR_FRESHCLONE_ROOT="$PROJECT_ROOT"
 CONTRIB="$PROJECT_ROOT/contrib"
 CONTRIB_APPIMAGE="$CONTRIB/build-linux/appimage"
 DISTDIR="$PROJECT_ROOT/dist"
 BUILDDIR="$CONTRIB_APPIMAGE/build/appimage"
 APPDIR="$BUILDDIR/pallectrum.AppDir"
 CACHEDIR="$CONTRIB_APPIMAGE/.cache/appimage"
-TYPE2_RUNTIME_REPO_DIR="$CACHEDIR/type2-runtime"
+TYPE2_RUNTIME_REPO_DIR="$PROJECT_ROOT_OR_FRESHCLONE_ROOT/contrib/build-linux/appimage/.cache/appimage/type2-runtime"
 export DLL_TARGET_DIR="$CACHEDIR/dlls"
 PIP_CACHE_DIR="$CONTRIB_APPIMAGE/.cache/pip_cache"
 

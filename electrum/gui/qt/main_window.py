@@ -841,7 +841,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger, QtEventListener):
             about_action.triggered.connect(self.show_about)
             about_action.setMenuRole(QAction.MenuRole.AboutRole)  # make sure OS recognizes it as "About"
             self.help_menu.addAction(about_action)
-        self.help_menu.addAction(_("&Check for updates"), self.show_update_check)
         self.help_menu.addAction(_("&Official website"), lambda: webopen("https://github.com/palladium-coin/pallectrum"))
         self.help_menu.addSeparator()
         self.help_menu.addAction(_("&Documentation"), lambda: webopen("https://github.com/palladium-coin/pallectrum/blob/main/user-guide.md")).setShortcut(QKeySequence.StandardKey.HelpContents)
@@ -893,9 +892,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger, QtEventListener):
             )
             return
         webopen('file:///' + filename)
-
-    def show_update_check(self, version=None):
-        self.gui_object._update_check = UpdateCheck(latest_version=version)
 
     def show_report_bug(self):
         msg = ' '.join([
