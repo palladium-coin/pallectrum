@@ -242,6 +242,13 @@ class QEWallet(AuthMixin, QObject, QtEventListener):
             self.balanceChanged.emit()
             self.peersUpdated.emit()
 
+    @event_listener
+    def on_event_blockchain_updated(self):
+        # Emit balanceChanged when new block arrives because:
+        # 1. Coinbase outputs might have matured (COINBASE_MATURITY = 120 blocks)
+        # 2. Transaction confirmations increased
+        self.balanceChanged.emit()
+
     @qt_event_listener
     def on_event_payment_succeeded(self, wallet, key):
         if wallet == self.wallet:
