@@ -50,6 +50,15 @@ fi
 # defined in the type2-runtime repo (patched with type2-runtime-reproducible-build.patch)
 "$CONTRIB_APPIMAGE/make_type2_runtime.sh" || fail "Error building type2-runtime."
 
+# if doing fresh clone, copy the runtime from original project to fresh clone
+if [ ! -z "$ELECBUILD_COMMIT" ] ; then
+    info "Copying type2-runtime to fresh clone..."
+    RUNTIME_SRC="$PROJECT_ROOT/contrib/build-linux/appimage/.cache/appimage/type2-runtime"
+    RUNTIME_DST="$FRESH_CLONE/contrib/build-linux/appimage/.cache/appimage/type2-runtime"
+    mkdir -p "$(dirname "$RUNTIME_DST")"
+    cp -r "$RUNTIME_SRC" "$(dirname "$RUNTIME_DST")/" || fail "Failed to copy runtime to fresh clone"
+fi
+
 DOCKER_RUN_FLAGS=""
 if sh -c ": >/dev/tty" >/dev/null 2>/dev/null; then
     info "/dev/tty is available and usable"
