@@ -25,9 +25,6 @@ PYTHON_VERSION=3.12.11
 PY_VER_MAJOR="3.12"  # as it appears in fs paths
 PKG2APPIMAGE_COMMIT="a9c85b7e61a3a883f4a35c41c5decb5af88b6b5d"
 
-VERSION=$(git describe --tags --dirty --always)
-APPIMAGE="$DISTDIR/pallectrum-$VERSION-x86_64.AppImage"
-
 rm -rf "$BUILDDIR"
 mkdir -p "$APPDIR" "$CACHEDIR" "$PIP_CACHE_DIR" "$DISTDIR" "$DLL_TARGET_DIR"
 
@@ -113,6 +110,22 @@ info "installing pip."
 "$python" -m ensurepip
 
 break_legacy_easy_install
+
+
+info "determining version for AppImage filename."
+# For reproducible builds or clean repo: use clean version from version.py
+# For development builds with uncommitted changes: add git hash and -dirty suffix
+VERSION=$("$python" "$CONTRIB"/print_electrum_version.py)
+if [ -n "$ELECBUILD_COMMIT" ] || git diff-index --quiet HEAD -- ; then
+    # Reproducible build or clean repo: clean version only
+    APPIMAGE="$DISTDIR/pallectrum-v$VERSION-x86_64.AppImage"
+else
+    # Development build with uncommitted changes: add git info
+    GIT_HASH=$(git rev-parse --short=9 HEAD)
+    VERSION_WITH_HASH="v$VERSION-$(git rev-list --count HEAD)-g$GIT_HASH-dirty"
+    APPIMAGE="$DISTDIR/pallectrum-$VERSION_WITH_HASH-x86_64.AppImage"
+fi
+info "AppImage will be: $APPIMAGE"
 
 
 info "preparing electrum-locale."
