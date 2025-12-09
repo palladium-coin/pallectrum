@@ -18,6 +18,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.1] - 2025-12-09
+
+### Overview
+This release fixes critical build system issues for Linux AppImage reproducibility. Linux builds are new to Pallectrum and were not available in previous versions.
+
+### Fixed
+
+#### 1. Fix: Type2-runtime path resolution for reproducible AppImage builds
+
+**Issue resolved**: Building with `ELECBUILD_COMMIT` failed with "Unable to load provided runtime file" errors.
+
+**Root Cause**:
+- Reproducible builds create a fresh git clone for deterministic output
+- Type2-runtime binary built in original project directory was inaccessible to fresh clone
+- Runtime cache location changed between contexts
+
+**Implemented changes**:
+
+a) **Runtime cache persistence** (`contrib/build-linux/appimage/make_type2_runtime.sh`)
+   - Changed cache to fixed `$PROJECT_ROOT` location (persists across fresh clones)
+   - Added validation: file exists AND non-zero size
+   - Automatic cleanup and rebuild if runtime is corrupted
+
+b) **Runtime transfer for fresh clones** (`contrib/build-linux/appimage/build.sh`)
+   - Copies pre-built runtime from original project to fresh clone when `ELECBUILD_COMMIT` is set
+   - Creates directory structure and includes error handling
+
+**Modified files**:
+- `contrib/build-linux/appimage/build.sh` (+9 lines)
+- `contrib/build-linux/appimage/make_type2_runtime.sh` (+35, -5 lines)
+
+**Impact**:
+- Reproducible builds now work without runtime errors
+- Better resilience to cache corruption
+- Faster builds through runtime reuse (~5-10 minutes saved)
+
+#### 2. Fix: AppImage filename version handling for deterministic builds
+
+**Issue resolved**: Filenames were non-deterministic, making it difficult to distinguish official releases from development builds.
+
+**Root Cause**:
+- Version determined too early (before Python installation)
+- Used `git describe` which varies by repository state
+
+**Implemented changes** (`contrib/build-linux/appimage/make_appimage.sh`):
+- Moved version detection to after environment setup
+- Changed from `git describe` to `print_electrum_version.py` (reads `electrum/version.py`)
+- Conditional filename generation:
+  - **Reproducible/clean**: `pallectrum-v0.9.1-x86_64.AppImage`
+  - **Development**: `pallectrum-v0.9.1-<count>-g<hash>-dirty-x86_64.AppImage`
+
+**Modified files**:
+- `contrib/build-linux/appimage/make_appimage.sh` (+16, -3 lines)
+
+**Impact**:
+- Deterministic filenames for reproducible builds
+- Development builds clearly marked as non-official
+- Better traceability for debugging
+
+### Technical Details
+
+- Docker-based reproducible builds with fresh clone isolation
+- Runtime cached after first build (saves 5-10 minutes on subsequent builds)
+- Total changes: 3 files, 63 insertions, 8 deletions
+
+### Testing
+
+- Reproducible build with `ELECBUILD_COMMIT=HEAD` works without errors
+- Development builds produce `-dirty` filename
+- Runtime caching works across multiple builds
+- AppImage executes correctly on Ubuntu 20.04+
+
+### Upgrade Notes
+
+**For end users**: No action required. This is a build system fix only.
+
+**For maintainers**: Reproducible builds with `ELECBUILD_COMMIT` now work reliably.
+
+---
+
 ## [0.9.0] - 2025-12-07
 
 ### Overview
