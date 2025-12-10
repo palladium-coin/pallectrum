@@ -18,6 +18,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0] - 2025-12-10
+
+### Overview
+**First Stable Release!** This milestone release marks Pallectrum as production-ready for the Palladium blockchain. After extensive testing and refinement through beta versions (0.9.x), Pallectrum 1.0.0 provides a stable, user-friendly wallet experience with complete rebranding, improved UI/UX, and high-quality visual assets.
+
+### Highlights
+- Complete rebranding from Electrum to Pallectrum across all interfaces
+- Improved UI/UX for both desktop and mobile platforms
+- High-quality icon set refresh with better visual consistency
+- Robust build system for Windows, Linux, and Android
+- Production-ready stability and performance
+
+### Fixed
+
+#### UI Improvements
+
+**1. Fix(QML): Resolve text overlap in transaction input display**
+- **Issue**: Transaction input information (short_id and value) overlapped on small screens or with long identifiers in Android QML interface
+- **Solution**: Split transaction input display into two separate rows
+  - First row: displays input index (#) and short_id with text eliding (Text.ElideRight)
+  - Second row: displays value amount and unit with left margin indent
+- **Impact**: All transaction input information remains visible and readable without UI elements overlapping, especially important for coinbase inputs and transactions with long identifiers
+
+**2. Fix: Update seed dialog window title from Electrum to Pallectrum**
+- Changed window title from "Electrum - Seed" to "Pallectrum - Seed" in Wallet > Seed dialog
+- Completes branding consistency across desktop Qt interface
+
+#### Branding & References
+
+**3. Fix(constants): Update bug report references to Pallectrum**
+- Changed bug report URLs from `spesmilo/electrum` to `palladium-coin/pallectrum`
+- Updated "Electrum" to "Pallectrum" in Help > Report Bug dialog text
+- Ensures users report issues to the correct repository
+
+#### Build System
+
+**4. Fix(build): Update shortcuts to reference Pallectrum executable**
+- Fixed Windows desktop and start-menu shortcuts to use correct executable path
+- Updated Windows registry entries for proper application launching
+- Ensures shortcuts work correctly after installation
+
+### Changed
+
+#### Visual Assets Refresh
+
+**5. Complete icon set rebuild with improved quality**
+- Rebuilt all icon resolutions from 1024px master source for optimal clarity
+- Improved scaling quality using NoAura/LoHalo interpolation algorithms
+- Enhanced Windows .ico file quality with better anti-aliasing
+- Cleaned duplicate assets and aligned icon files across all platforms
+- **Result**: Better visual quality on all screen resolutions (desktop, mobile, high-DPI displays)
+
+### Download
+
+Release binaries available at: https://github.com/palladium-coin/pallectrum/releases/tag/v1.0.0
+
+- **Windows Portable**: `pallectrum-1.0.0-portable.exe` (recommended for USB drives)
+- **Windows Installer**: `pallectrum-1.0.0-setup.exe` (standard installation)
+- **Linux AppImage**: `pallectrum-1.0.0-x86_64.AppImage` (all distributions)
+- **Android APK**: `pallectrum-1.0.0.apk`
+
+### Checksums
+
+SHA256 checksums will be provided in the release notes.
+
+---
+
 ## [0.9.1] - 2025-12-09
 
 ### Overview
