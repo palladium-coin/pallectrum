@@ -34,7 +34,14 @@ TextHighlightPane {
                 Layout.fillWidth: true
                 text: model.short_id
                 font.family: FixedFont
+                wrapMode: Text.NoWrap
+                elide: Text.ElideRight
             }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: constants.paddingLarge
             Label {
                 id: txin_value
                 text: model.value != undefined
