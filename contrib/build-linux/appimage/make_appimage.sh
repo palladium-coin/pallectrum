@@ -20,6 +20,20 @@ git -C "$PROJECT_ROOT" rev-parse 2>/dev/null || fail "Building outside a git clo
 
 export GCC_STRIP_BINARIES="1"
 
+# Determine architecture (default to x86_64 if not set)
+ARCH="${ARCH:-x86_64}"
+if [ "$ARCH" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then
+    fail "Unsupported ARCH: $ARCH. Must be x86_64 or aarch64"
+fi
+info "Building for architecture: $ARCH"
+
+# Set architecture-specific variables
+if [ "$ARCH" = "aarch64" ]; then
+    LINUX_GNU_ARCH="aarch64-linux-gnu"
+else
+    LINUX_GNU_ARCH="x86_64-linux-gnu"
+fi
+
 # pinned versions
 PYTHON_VERSION=3.12.11
 PY_VER_MAJOR="3.12"  # as it appears in fs paths
@@ -36,8 +50,12 @@ info "downloading some dependencies."
 download_if_not_exist "$CACHEDIR/functions.sh" "https://raw.githubusercontent.com/AppImage/pkg2appimage/$PKG2APPIMAGE_COMMIT/functions.sh"
 verify_hash "$CACHEDIR/functions.sh" "8f67711a28635b07ce539a9b083b8c12d5488c00003d6d726c7b134e553220ed"
 
-download_if_not_exist "$CACHEDIR/appimagetool" "https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage"
-verify_hash "$CACHEDIR/appimagetool" "46fdd785094c7f6e545b61afcfb0f3d98d8eab243f644b4b17698c01d06083d1"
+download_if_not_exist "$CACHEDIR/appimagetool-$ARCH" "https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-$ARCH.AppImage"
+if [ "$ARCH" = "x86_64" ]; then
+    verify_hash "$CACHEDIR/appimagetool-$ARCH" "46fdd785094c7f6e545b61afcfb0f3d98d8eab243f644b4b17698c01d06083d1"
+else
+    verify_hash "$CACHEDIR/appimagetool-$ARCH" "04f45ea45b5aa07bb2b071aed9dbf7a5185d3953b11b47358c1311f11ea94a96"
+fi
 # note: desktop-file-utils in the docker image is needed to run desktop-file-validate for appimagetool <= 1.9.0, so it can be removed once
 # appimagetool tags a new release (see https://github.com/AppImage/appimagetool/pull/47)
 
@@ -99,7 +117,7 @@ cp -f "$DLL_TARGET_DIR/libzbar.so.0" "$APPDIR/usr/lib/" || fail "Could not copy 
 appdir_python() {
     env \
         PYTHONNOUSERSITE=1 \
-        LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}" \
+        LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib/$LINUX_GNU_ARCH${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}" \
         "$APPDIR/usr/bin/python${PY_VER_MAJOR}" "$@"
 }
 
@@ -118,12 +136,12 @@ info "determining version for AppImage filename."
 VERSION=$("$python" "$CONTRIB"/print_electrum_version.py)
 if [ -n "$ELECBUILD_COMMIT" ] || git diff-index --quiet HEAD -- ; then
     # Reproducible build or clean repo: clean version only
-    APPIMAGE="$DISTDIR/pallectrum-v$VERSION-x86_64.AppImage"
+    APPIMAGE="$DISTDIR/pallectrum-v$VERSION-$ARCH.AppImage"
 else
     # Development build with uncommitted changes: add git info
     GIT_HASH=$(git rev-parse --short=9 HEAD)
     VERSION_WITH_HASH="v$VERSION-$(git rev-list --count HEAD)-g$GIT_HASH-dirty"
-    APPIMAGE="$DISTDIR/pallectrum-$VERSION_WITH_HASH-x86_64.AppImage"
+    APPIMAGE="$DISTDIR/pallectrum-$VERSION_WITH_HASH-$ARCH.AppImage"
 fi
 info "AppImage will be: $APPIMAGE"
 
@@ -160,8 +178,26 @@ export ELECTRUM_ECC_DONT_COMPILE=1
 info "installing electrum and its dependencies."
 "$python" -m pip install --no-build-isolation --no-dependencies --no-binary :all: --no-warn-script-location \
     --cache-dir "$PIP_CACHE_DIR" -r "$CONTRIB/deterministic-build/requirements.txt"
-"$python" -m pip install --no-build-isolation --no-dependencies --no-binary :all: --only-binary PyQt6,PyQt6-Qt6,cryptography --no-warn-script-location \
-    --cache-dir "$PIP_CACHE_DIR" -r "$CONTRIB/deterministic-build/requirements-binaries.txt"
+
+# For aarch64, PyQt6 6.9.0 is not available, so we install compatible versions without hash verification
+if [ "$ARCH" = "aarch64" ]; then
+    info "Installing binaries for aarch64 (using latest compatible versions)..."
+    "$python" -m pip install --no-build-isolation --no-dependencies --only-binary PyQt6,PyQt6-Qt6,cryptography --no-warn-script-location \
+        --cache-dir "$PIP_CACHE_DIR" \
+        'cffi==1.17.1' \
+        'cryptography==45.0.3' \
+        'pip==25.1.1' \
+        'pycparser==2.22' \
+        'PyQt6>=6.7.0,<6.8.0' \
+        'PyQt6-Qt6>=6.7.0,<6.8.0' \
+        'PyQt6-sip==13.10.2' \
+        'setuptools==80.9.0' \
+        'wheel==0.45.1'
+else
+    "$python" -m pip install --no-build-isolation --no-dependencies --no-binary :all: --only-binary PyQt6,PyQt6-Qt6,cryptography --no-warn-script-location \
+        --cache-dir "$PIP_CACHE_DIR" -r "$CONTRIB/deterministic-build/requirements-binaries.txt"
+fi
+
 "$python" -m pip install --no-build-isolation --no-dependencies --no-binary :all: --no-warn-script-location \
     --cache-dir "$PIP_CACHE_DIR" -r "$CONTRIB/deterministic-build/requirements-hw.txt"
 
@@ -200,11 +236,11 @@ info "finalizing AppDir."
 info "Copying additional libraries"
 (
     # On some systems it can cause problems to use the system libusb (on AppImage excludelist)
-    cp -f /usr/lib/x86_64-linux-gnu/libusb-1.0.so "$APPDIR/usr/lib/libusb-1.0.so" || fail "Could not copy libusb"
+    cp -f /usr/lib/$LINUX_GNU_ARCH/libusb-1.0.so "$APPDIR/usr/lib/libusb-1.0.so" || fail "Could not copy libusb"
     # some distros lack libxkbcommon-x11
-    cp -f /usr/lib/x86_64-linux-gnu/libxkbcommon-x11.so.0 "$APPDIR"/usr/lib/x86_64-linux-gnu || fail "Could not copy libxkbcommon-x11"
+    cp -f /usr/lib/$LINUX_GNU_ARCH/libxkbcommon-x11.so.0 "$APPDIR"/usr/lib/$LINUX_GNU_ARCH || fail "Could not copy libxkbcommon-x11"
     # some distros lack some libxcb libraries (see https://github.com/Electron-Cash/Electron-Cash/issues/2196)
-    cp -f /usr/lib/x86_64-linux-gnu/libxcb-* "$APPDIR"/usr/lib/x86_64-linux-gnu || fail "Could not copy libxcb"
+    cp -f /usr/lib/$LINUX_GNU_ARCH/libxcb-* "$APPDIR"/usr/lib/$LINUX_GNU_ARCH || fail "Could not copy libxcb"
 )
 
 info "stripping binaries from debug symbols."
@@ -233,7 +269,7 @@ PYDIR="$APPDIR/usr/lib/python${PY_VER_MAJOR}"
 rm -rf "$PYDIR"/{test,ensurepip,lib2to3,idlelib,turtledemo}
 rm -rf "$PYDIR"/{ctypes,sqlite3,tkinter,unittest}/test
 rm -rf "$PYDIR"/distutils/{command,tests}
-rm -rf "$PYDIR"/config-3.*-x86_64-linux-gnu
+rm -rf "$PYDIR"/config-3.*-$LINUX_GNU_ARCH
 rm -rf "$PYDIR"/site-packages/{opt,pip,setuptools,wheel}
 rm -rf "$PYDIR"/site-packages/Cryptodome/SelfTest
 rm -rf "$PYDIR"/site-packages/{psutil,qrcode,websocket}/tests
@@ -271,7 +307,7 @@ find -exec touch -h -d '2000-11-11T11:11:11+00:00' {} +
 info "creating the AppImage."
 (
     cd "$BUILDDIR"
-    cp "$CACHEDIR/appimagetool" "$CACHEDIR/appimagetool_copy"
+    cp "$CACHEDIR/appimagetool-$ARCH" "$CACHEDIR/appimagetool_copy"
     # zero out "appimage" magic bytes, as on some systems they confuse the linker
     sed -i 's|AI\x02|\x00\x00\x00|' "$CACHEDIR/appimagetool_copy"
     chmod +x "$CACHEDIR/appimagetool_copy"
@@ -285,7 +321,7 @@ args=\$(echo "\$@" | sed -e 's/-mkfs-time 0//')
 "$BUILDDIR/squashfs-root/usr/bin/mksquashfs_orig" \$args
 EOF
     chmod +x "$BUILDDIR/squashfs-root/usr/bin/mksquashfs"
-    env VERSION="$VERSION" ARCH=x86_64 ./squashfs-root/AppRun --runtime-file "$TYPE2_RUNTIME_REPO_DIR/runtime-x86_64" --no-appstream --verbose "$APPDIR" "$APPIMAGE"
+    env VERSION="$VERSION" ARCH="$ARCH" ./squashfs-root/AppRun --runtime-file "$TYPE2_RUNTIME_REPO_DIR/runtime-$ARCH" --no-appstream --verbose "$APPDIR" "$APPIMAGE"
 )
 
 

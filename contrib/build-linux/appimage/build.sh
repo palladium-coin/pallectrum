@@ -3,6 +3,7 @@
 # env vars:
 # - ELECBUILD_NOCACHE: if set, forces rebuild of docker image
 # - ELECBUILD_COMMIT: if set, do a fresh clone and git checkout
+# - ARCH: target architecture (x86_64 or aarch64, default: x86_64)
 
 set -e
 
@@ -14,6 +15,13 @@ DISTDIR="$PROJECT_ROOT/dist"
 BUILD_UID=$(/usr/bin/stat -c %u "$PROJECT_ROOT")
 
 . "$CONTRIB"/build_tools_util.sh
+
+# Determine architecture (default to x86_64 if not set)
+export ARCH="${ARCH:-x86_64}"
+if [ "$ARCH" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then
+    fail "Unsupported ARCH: $ARCH. Must be x86_64 or aarch64"
+fi
+info "Building AppImage for architecture: $ARCH"
 
 
 DOCKER_BUILD_FLAGS=""
@@ -29,6 +37,7 @@ fi
 info "building docker image."
 docker build \
     $DOCKER_BUILD_FLAGS \
+    --build-arg TARGETARCH="$ARCH" \
     -t pallectrum-appimage-builder-img \
     "$CONTRIB_APPIMAGE"
 
@@ -78,6 +87,7 @@ docker run $DOCKER_RUN_FLAGS \
     -v "$PROJECT_ROOT_OR_FRESHCLONE_ROOT":/opt/pallectrum \
     --rm \
     --workdir /opt/pallectrum/contrib/build-linux/appimage \
+    -e ARCH="$ARCH" \
     pallectrum-appimage-builder-img \
     ./make_appimage.sh
 

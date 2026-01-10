@@ -13,12 +13,18 @@ TYPE2_RUNTIME_REPO="https://github.com/AppImage/type2-runtime.git"
 
 . "$CONTRIB"/build_tools_util.sh
 
+# Determine architecture (default to x86_64 if not set)
+ARCH="${ARCH:-x86_64}"
+if [ "$ARCH" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then
+    fail "Unsupported ARCH: $ARCH. Must be x86_64 or aarch64"
+fi
+info "Building type2-runtime for architecture: $ARCH"
 
 # Use a shared cache location that persists across fresh clones
 # This is critical for reproducible builds with ELECBUILD_COMMIT
 TYPE2_RUNTIME_REPO_DIR="$PROJECT_ROOT/contrib/build-linux/appimage/.cache/appimage/type2-runtime"
-if [ -f "$TYPE2_RUNTIME_REPO_DIR/runtime-x86_64" ] && [ -s "$TYPE2_RUNTIME_REPO_DIR/runtime-x86_64" ]; then
-    info "type2-runtime already built ($(du -h "$TYPE2_RUNTIME_REPO_DIR/runtime-x86_64" | cut -f1)), skipping"
+if [ -f "$TYPE2_RUNTIME_REPO_DIR/runtime-$ARCH" ] && [ -s "$TYPE2_RUNTIME_REPO_DIR/runtime-$ARCH" ]; then
+    info "type2-runtime already built ($(du -h "$TYPE2_RUNTIME_REPO_DIR/runtime-$ARCH" | cut -f1)), skipping"
     exit 0
 fi
 
@@ -42,21 +48,21 @@ fi
 
 info "building type2-runtime in build container..."
 cd "$TYPE2_RUNTIME_REPO_DIR/scripts/docker"
-env ARCH=x86_64 ./build-with-docker.sh || fail "Failed to build type2-runtime with docker"
+env ARCH="$ARCH" ./build-with-docker.sh || fail "Failed to build type2-runtime with docker"
 
 # Verify the runtime was created in the expected location
-if [ ! -f "./runtime-x86_64" ]; then
-    fail "Runtime binary was not created by docker build (expected at: $TYPE2_RUNTIME_REPO_DIR/scripts/docker/runtime-x86_64)"
+if [ ! -f "./runtime-$ARCH" ]; then
+    fail "Runtime binary was not created by docker build (expected at: $TYPE2_RUNTIME_REPO_DIR/scripts/docker/runtime-$ARCH)"
 fi
 
-mv "./runtime-x86_64" "$TYPE2_RUNTIME_REPO_DIR/"
+mv "./runtime-$ARCH" "$TYPE2_RUNTIME_REPO_DIR/"
 
 # Verify runtime is valid (not empty)
-if [ ! -s "$TYPE2_RUNTIME_REPO_DIR/runtime-x86_64" ]; then
+if [ ! -s "$TYPE2_RUNTIME_REPO_DIR/runtime-$ARCH" ]; then
     fail "Runtime binary is empty or invalid"
 fi
 
 # clean up the empty created 'out' dir to prevent permission issues
 rm -rf "$TYPE2_RUNTIME_REPO_DIR/out"
 
-info "runtime build successful: $(sha256sum "$TYPE2_RUNTIME_REPO_DIR/runtime-x86_64")"
+info "runtime build successful: $(sha256sum "$TYPE2_RUNTIME_REPO_DIR/runtime-$ARCH")"
