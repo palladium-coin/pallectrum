@@ -42,7 +42,9 @@ The easiest way to run Pallectrum is to download the pre-built binaries:
 - **Windows**: Two versions available:
   - `pallectrum-x.x.x-portable.exe` - **Recommended for USB drives**. Saves all data (wallets, configuration) in the same directory as the executable. Perfect for portable installations.
   - `pallectrum-x.x.x-setup.exe` - Standalone installer. Installs to Program Files and saves data in `%APPDATA%\Pallectrum`.
-- **Linux**: Download `pallectrum-x.x.x-x86_64.AppImage`
+- **Linux**: Two versions available:
+  - `pallectrum-x.x.x-x86_64.AppImage` - For Intel/AMD 64-bit systems
+  - `pallectrum-x.x.x-aarch64.AppImage` - For ARM64 systems
 - **Android**: Download `pallectrum-x.x.x.apk`
 
 ### Running from Source
