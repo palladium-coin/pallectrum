@@ -80,9 +80,11 @@ ARG UID=1000
 RUN if [ "$UID" != "0" ] ; then useradd --uid $UID --create-home --shell /bin/bash "user" ; fi
 RUN usermod -append --groups sudo $(id -nu $UID || echo "user")
 RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-RUN HOME_DIR=$(getent passwd $UID | cut -d: -f6)
-ENV WORK_DIR="${HOME_DIR}/wspace" \
-    PATH="${HOME_DIR}/.local/bin:${PATH}"
+RUN HOME_DIR=$(getent passwd $UID | cut -d: -f6) && \
+    echo "WORK_DIR=${HOME_DIR}/wspace" >> /etc/environment && \
+    echo "PATH=${HOME_DIR}/.local/bin:${PATH}" >> /etc/environment
+ENV WORK_DIR="/home/user/wspace" \
+    PATH="/home/user/.local/bin:${PATH}"
 WORKDIR ${WORK_DIR}
 RUN chown --recursive ${UID} ${WORK_DIR}
 USER ${UID}
