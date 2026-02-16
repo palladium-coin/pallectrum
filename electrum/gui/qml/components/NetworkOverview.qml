@@ -296,6 +296,7 @@ Pane {
                     dialog.open()
                 }
             }
+
         }
     }
 

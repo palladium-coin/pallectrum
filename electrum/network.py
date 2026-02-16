@@ -408,6 +408,36 @@ class Network(Logger, NetworkRetryManager[ServerAddr]):
         """Our guess whether the device has Internet-connectivity."""
         return self._has_ever_managed_to_connect_to_server
 
+    def clear_recent_servers(self) -> int:
+        """Clear the list of recently used servers."""
+        with self.recent_servers_lock:
+            count = len(self._recent_servers)
+            self._recent_servers = []
+            self._save_recent_servers()
+        self.logger.info(f"cleared {count} recent server(s)")
+        return count
+
+    async def clear_pinned_server_certs(self) -> int:
+        """Delete cached server SSL certs and reconnect interfaces."""
+        certs_dir = os.path.join(self.config.path, 'certs')
+        util.make_dir(certs_dir)
+        removed = 0
+        for entry in os.scandir(certs_dir):
+            if not entry.is_file():
+                continue
+            try:
+                os.unlink(entry.path)
+                removed += 1
+            except OSError as e:
+                self.logger.warning(f"failed to delete cert file {entry.path!r}: {e!r}")
+        self.logger.info(f"removed {removed} cached server cert(s)")
+        if removed:
+            with self.interfaces_lock:
+                interfaces = list(self.interfaces.values())
+            for iface in interfaces:
+                await self._close_interface(iface)
+        return removed
+
     def has_channel_db(self):
         return self.channel_db is not None
 
