@@ -652,7 +652,7 @@ def deserialize_privkey(key: str) -> Tuple[str, bytes, bool]:
 
     if txin_type is None:
         # keys exported in version 3.0.x encoded script type in first byte
-        prefix_value = vch[0] - constants.net.WIF_PREFIX
+        prefix_value = (vch[0] - constants.net.WIF_PREFIX) % 256
         try:
             txin_type = WIF_SCRIPT_TYPES_INV[prefix_value]
         except KeyError as e:

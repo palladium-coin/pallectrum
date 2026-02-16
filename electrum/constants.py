@@ -258,7 +258,7 @@ BitcoinTestnet = PalladiumTestnet
 class BitcoinRegtest(PalladiumTestnet):
 
     NET_NAME = "regtest"
-    SEGWIT_HRP = "bcrt"
+    SEGWIT_HRP = "rplm"
     BOLT11_HRP = SEGWIT_HRP
     GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
     LN_DNS_SEEDS = []
