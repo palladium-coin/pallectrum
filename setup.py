@@ -45,7 +45,11 @@ extras_require = {
     'gui': ['pyqt6'],
     'crypto': ['cryptography>=2.6'],
     'tests': ['pycryptodomex>=3.7', 'cryptography>=2.6', 'pyaes>=0.1a1'],
-    'qml_gui': ['pyqt6<6.6', 'pyqt6-qt6<6.6']
+    'qml_gui': [
+        'pyqt6>=6.7.0,<6.8.0',
+        'pyqt6-qt6>=6.7.0,<6.8.0',
+        'pyqt6-sip==13.10.2',
+    ],
 }
 # 'full' extra that tries to grab everything an enduser would need (except for libsecp256k1...)
 extras_require['full'] = [pkg for sublist in

@@ -49,82 +49,108 @@ The easiest way to run Pallectrum is to download the pre-built binaries:
 
 ### Running from Source
 
-If you want to run Pallectrum from source, you'll need Python 3.10 or higher.
+Running from source requires **Python 3.10 or higher**. Follow the steps for your platform below.
+
+---
 
 #### Windows
 
-**Prerequisites:**
-
-- Python 3.10+ installed from [python.org](https://www.python.org/downloads/)
-
-**Setup with Virtual Environment:**
+**Prerequisite:** Python 3.10+ from [python.org](https://www.python.org/downloads/)
 
 ```powershell
-# Clone repository
+# Clone the repository
 git clone https://github.com/palladium-coin/pallectrum.git
 cd pallectrum
 
-# Create and activate virtual environment
+# Create and activate a virtual environment
 python -m venv env
 env\Scripts\Activate.ps1
 
-# Upgrade pip and install dependencies
+# Install dependencies
 python -m pip install --upgrade pip
 pip install -e ".[gui,crypto]"
 
-# Copy libsecp256k1 DLL (if needed)
+# Copy the secp256k1 library (required on Windows)
 copy libsecp256k1*.dll env\Lib\site-packages\electrum_ecc\
 
-# Run with Qt GUI
+# Launch
 python run_electrum
 ```
 
-##### Optional: QML GUI on Windows (simulates Android interface)
+> **Optional – QML GUI** (simulates the Android interface):
+> ```powershell
+> pip install -e ".[qml_gui]"
+> python run_electrum -g qml
+> ```
 
-```powershell
-pip install ".[qml_gui]"
-python run_electrum gui -g qml
-```
+---
 
-#### Linux (Ubuntu/Debian)
+#### Linux (Ubuntu / Debian)
 
-**Install Prerequisites:**
+##### 1. Install system prerequisites
 
 ```bash
-# System packages
 sudo apt update
-sudo apt install -y python3-venv python3-pip build-essential python3-dev
-sudo apt install -y libffi-dev libssl-dev libsecp256k1-dev
+sudo apt install -y \
+  python3-venv python3-pip python3-dev build-essential \
+  libffi-dev libssl-dev libsecp256k1-dev libpulse0
 ```
 
-**Setup with Virtual Environment:**
+##### 2. Clone the repository and set up the virtual environment
 
 ```bash
-# Clone repository
 git clone https://github.com/palladium-coin/pallectrum.git
 cd pallectrum
 
-# Create and activate virtual environment
 python3 -m venv env
 source env/bin/activate
-
-# Upgrade pip and install dependencies
 python3 -m pip install --upgrade pip
-pip install -e ".[gui,crypto]"
+```
 
-# Run with Qt GUI
+##### 3. Install dependencies
+
+###### 3.1. x86_64 (Intel / AMD)
+
+```bash
+pip install -e ".[gui,crypto]"
+```
+
+###### 3.2. ARM64 / aarch64
+
+> PyQt6 ≥ 6.9 wheels are not published for ARM64 on PyPI — pinned versions must be used.
+
+```bash
+pip install -r contrib/requirements/requirements.txt
+pip install "cryptography>=2.6"
+pip install --only-binary PyQt6,PyQt6-Qt6,PyQt6-sip \
+  "PyQt6>=6.7.0,<6.8.0" \
+  "PyQt6-Qt6>=6.7.0,<6.8.0" \
+  "PyQt6-sip==13.10.2"
+pip install -e .
+```
+
+##### 4. Launch
+
+```bash
 python run_electrum
 ```
 
-##### Optional: QML GUI on Linux (simulates Android interface)
+###### 4.1. Optional – QML GUI (Android-like interface)
 
+*x86_64*
 ```bash
-pip install ".[qml_gui]"
-python run_electrum gui -g qml
+pip install -e ".[qml_gui]"
+python run_electrum -g qml
 ```
 
-For detailed installation instructions, including dependencies and platform-specific notes, see the [original Electrum documentation](README-ELECTRUM.md#getting-started).
+*ARM64* — the pinned PyQt6 packages installed in step 3 already include QML support:
+```bash
+python run_electrum -g qml
+```
 
+---
+
+For the full list of dependencies and advanced configuration options, see [README-ELECTRUM.md#getting-started](README-ELECTRUM.md#getting-started).
 
 ## User Guide
 
@@ -168,10 +194,10 @@ Pallectrum stores wallet data and configuration in:
 
 Pallectrum includes specific adaptations for the Palladium blockchain:
 
-- BIP21 URI scheme: `palladium:` (instead of `bitcoin:`)
+- BIP21 URI scheme: `palladium:`
 - BIP44 coin type: 746
 - Default block explorer: https://explorer.palladium-coin.com/
-- Currency unit: PLM (Palladium) instead of BTC
+- Currency unit: PLM (Palladium)
 - Checkpoint-based validation (compatible with LWMA difficulty algorithm)
 
 
