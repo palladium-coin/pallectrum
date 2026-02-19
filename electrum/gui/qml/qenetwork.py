@@ -306,3 +306,19 @@ class QENetwork(QObject, QtEventListener):
     @pyqtSlot()
     def probeTor(self):
         ProxySettings.probe_tor(self.torProbeFinished.emit)  # via signal
+
+    @pyqtSlot(result=int)
+    def clearPinnedServerCertificates(self):
+        try:
+            return self.network.run_from_another_thread(self.network.clear_pinned_server_certs())
+        except Exception:
+            self._logger.exception("failed to clear pinned server certificates")
+            return -1
+
+    @pyqtSlot(result=int)
+    def clearRecentServers(self):
+        try:
+            return self.network.clear_recent_servers()
+        except Exception:
+            self._logger.exception("failed to clear recent servers")
+            return -1

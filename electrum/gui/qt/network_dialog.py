@@ -29,7 +29,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QMenu, QGridLayout, QComboBox, QLineEdit, QDialog, QVBoxLayout, QHeaderView,
     QCheckBox, QTabWidget, QWidget, QLabel, QPushButton, QHBoxLayout,
-    QListWidget, QListWidgetItem,
+    QListWidget, QListWidgetItem, QMessageBox,
 )
 from PyQt6.QtGui import QIntValidator
 
@@ -444,6 +444,16 @@ class ServerWidget(QWidget, QtEventListener):
         self.layout().addWidget(self.nodes_list_widget)
         self.nodes_list_widget.update()
 
+        self.clear_certs_button = QPushButton(_('Reset SSL certificates'))
+        self.clear_certs_button.clicked.connect(self.clear_pinned_server_certs)
+        self.clear_servers_button = QPushButton(_('Reset known servers'))
+        self.clear_servers_button.clicked.connect(self.clear_recent_servers)
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        buttons.addWidget(self.clear_certs_button)
+        buttons.addWidget(self.clear_servers_button)
+        self.layout().addLayout(buttons)
+
         self.register_callbacks()
         self.destroyed.connect(lambda: self.unregister_callbacks())
 
@@ -583,6 +593,54 @@ class ServerWidget(QWidget, QtEventListener):
         )
         _logger.debug(f"set_server: {new_net_params=}")
         self.network.run_from_another_thread(self.network.set_parameters(new_net_params))
+
+    def clear_pinned_server_certs(self):
+        result = QMessageBox.question(
+            self,
+            _('Reset SSL certificates'),
+            _('This will remove cached SSL certificates for servers and reconnect to fetch them again.')
+            + '\n\n'
+            + _('Do you want to continue?'),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if result != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            removed = self.network.run_from_another_thread(self.network.clear_pinned_server_certs())
+        except Exception as e:
+            _logger.exception("failed to clear pinned server certificates")
+            QMessageBox.critical(self, _('Reset SSL certificates'), str(e))
+            return
+        if removed > 0:
+            msg = _('{} certificate files were removed.').format(removed)
+        else:
+            msg = _('No cached certificate files were found.')
+        QMessageBox.information(self, _('Reset SSL certificates'), msg)
+
+    def clear_recent_servers(self):
+        result = QMessageBox.question(
+            self,
+            _('Reset known servers'),
+            _('This will remove the list of known servers.')
+            + '\n\n'
+            + _('Do you want to continue?'),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if result != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            removed = self.network.clear_recent_servers()
+        except Exception as e:
+            _logger.exception("failed to clear recent servers")
+            QMessageBox.critical(self, _('Reset known servers'), str(e))
+            return
+        if removed > 0:
+            msg = _('{} server(s) were removed.').format(removed)
+        else:
+            msg = _('No known servers were found.')
+        QMessageBox.information(self, _('Reset known servers'), msg)
 
 
 class NostrWidget(QWidget, QtEventListener):

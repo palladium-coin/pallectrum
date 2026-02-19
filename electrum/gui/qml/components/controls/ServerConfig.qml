@@ -50,9 +50,73 @@ Item {
             }
         }
 
-        Label {
-            text: qsTr("Server")
-            enabled: address_tf.enabled
+        RowLayout {
+            Layout.fillWidth: true
+
+            Label {
+                text: qsTr("Server")
+                enabled: address_tf.enabled
+                Layout.fillWidth: true
+            }
+
+            ToolButton {
+                icon.source: '../../../icons/delete.png'
+                ToolTip.text: qsTr('Reset network data')
+                ToolTip.visible: hovered
+                onClicked: resetMenu.open()
+
+                Menu {
+                    id: resetMenu
+
+                    MenuItem {
+                        text: qsTr('SSL certificates')
+                        onTriggered: {
+                            var dialog = app.messageDialog.createObject(app, {
+                                title: qsTr('Are you sure?'),
+                                text: qsTr('This will remove cached SSL certificates for servers and reconnect to fetch them again.'),
+                                yesno: true
+                            })
+                            dialog.accepted.connect(function() {
+                                var removed = Network.clearPinnedServerCertificates()
+                                var msg = removed < 0
+                                    ? qsTr('Failed to reset SSL certificates.')
+                                    : removed > 0
+                                        ? qsTr('%1 certificate files were removed.').arg(removed)
+                                        : qsTr('No cached certificate files were found.')
+                                app.messageDialog.createObject(app, {
+                                    title: qsTr('Reset SSL certificates'),
+                                    text: msg
+                                }).open()
+                            })
+                            dialog.open()
+                        }
+                    }
+
+                    MenuItem {
+                        text: qsTr('Known servers')
+                        onTriggered: {
+                            var dialog = app.messageDialog.createObject(app, {
+                                title: qsTr('Are you sure?'),
+                                text: qsTr('This will remove the list of known servers.'),
+                                yesno: true
+                            })
+                            dialog.accepted.connect(function() {
+                                var removed = Network.clearRecentServers()
+                                var msg = removed < 0
+                                    ? qsTr('Failed to reset known servers.')
+                                    : removed > 0
+                                        ? qsTr('%1 server(s) were removed.').arg(removed)
+                                        : qsTr('No known servers were found.')
+                                app.messageDialog.createObject(app, {
+                                    title: qsTr('Reset known servers'),
+                                    text: msg
+                                }).open()
+                            })
+                            dialog.open()
+                        }
+                    }
+                }
+            }
         }
 
         TextHighlightPane {
