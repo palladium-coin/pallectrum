@@ -845,7 +845,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger, QtEventListener):
         self.help_menu.addSeparator()
         self.help_menu.addAction(_("&Documentation"), lambda: webopen("https://github.com/palladium-coin/pallectrum/blob/main/user-guide.md")).setShortcut(QKeySequence.StandardKey.HelpContents)
         if not constants.net.TESTNET:
-            self.help_menu.addAction(_("&White Paper"), lambda: webopen("https://github.com/palladium-coin/palladiumcore/blob/master/assets/whitepaper/(original)whitepaper.pdf"))
+            self.help_menu.addAction(_("&White Paper"), lambda: webopen("https://github.com/palladium-coin/whitepaper/blob/main/whitepaper.pdf"))
         self.help_menu.addAction(_("&Report Bug"), self.show_report_bug)
         self.help_menu.addSeparator()
         self.help_menu.addAction(_("&Donate to server"), self.donate_to_server)

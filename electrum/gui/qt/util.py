@@ -1337,14 +1337,17 @@ def font_height(widget: QWidget = None) -> int:
 
 
 def webopen(url: str):
-    if sys.platform == 'linux' and os.environ.get('APPIMAGE'):
-        # When on Linux webbrowser.open can fail in AppImage because it can't find the correct libdbus.
-        # We just fork the process and unset LD_LIBRARY_PATH before opening the URL.
-        # See #5425
-        if os.fork() == 0:
-            del os.environ['LD_LIBRARY_PATH']
-            webbrowser.open(url)
-            os._exit(0)
+    if sys.platform == 'linux':
+        if os.environ.get('APPIMAGE'):
+            # When on Linux webbrowser.open can fail in AppImage because it can't find the correct libdbus.
+            # We just fork the process and unset LD_LIBRARY_PATH before opening the URL.
+            # See #5425
+            if os.fork() == 0:
+                del os.environ['LD_LIBRARY_PATH']
+                os.system(f'xdg-open "{url}" &')
+                os._exit(0)
+        else:
+            os.system(f'xdg-open "{url}" &')
     else:
         webbrowser.open(url)
 
