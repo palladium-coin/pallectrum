@@ -104,6 +104,7 @@ ENV ANDROID_SDK_BUILD_TOOLS_VERSION="31.0.0"
 
 # download platforms, API, build tools
 RUN ${ANDROID_SDK_MANAGER} "platforms;android-${ANDROID_SDK_BUILD_TOOLS_MAJOR_V}" > /dev/null && \
+    ${ANDROID_SDK_MANAGER} "platforms;android-34" > /dev/null && \
     ${ANDROID_SDK_MANAGER} "build-tools;${ANDROID_SDK_BUILD_TOOLS_VERSION}" > /dev/null && \
     ${ANDROID_SDK_MANAGER} "extras;android;m2repository" > /dev/null && \
     chmod +x "${ANDROID_SDK_HOME}/cmdline-tools/bin/avdmanager"
