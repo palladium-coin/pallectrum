@@ -11,6 +11,7 @@ Welcome to the Pallectrum user guide. This document will help you understand and
 3. [Creating a New Wallet](#3-creating-a-new-wallet)
 4. [Backing Up Your Seed Phrase](#4-backing-up-your-seed-phrase)
 5. [Recovering a Wallet from Seed](#5-recovering-a-wallet-from-seed)
+6. [Troubleshooting](#6-troubleshooting)
 
 ---
 
@@ -233,3 +234,45 @@ If you need to restore your wallet (new device, lost wallet file, etc.), you can
 - Verify the first receiving address matches your original wallet
 - Never enter your seed phrase on untrusted devices or websites
 - Use the official Pallectrum application from trusted sources only
+
+---
+
+## 6. Troubleshooting
+
+### Cannot Connect to Server — SSL Certificate Error
+
+#### Why this happens
+
+When Pallectrum connects to an Electrum server for the first time, it downloads and saves the server's SSL/TLS certificate locally. On subsequent connections, it compares the stored certificate with the one the server presents. If they do not match, the connection is refused — this is a security mechanism to protect you against man-in-the-middle attacks.
+
+This becomes a problem with **self-signed certificates**, which are common on personal or community-run servers. Unlike certificates issued by a trusted authority (CA), self-signed certificates are generated directly by the server administrator. They provide encryption, but they are not verified by any third party. When the administrator renews or replaces the certificate (for example, after it expires or following server maintenance), the new certificate no longer matches the one Pallectrum has stored locally, and the connection fails silently.
+
+**In short:** Pallectrum remembers "this server uses this exact certificate." If the certificate changes — even legitimately — Pallectrum refuses to reconnect until the old cached certificate is deleted.
+
+#### Symptoms
+
+- The wallet stays disconnected after selecting a personal or custom server
+- The status bar shows no connection even though the server is online
+- The problem started after a server update or maintenance window
+
+#### Solution
+
+Delete the locally cached certificate so that Pallectrum can fetch and store the new one on the next connection attempt.
+
+**On Android / QML interface:**
+
+1. Open the app and go to **Network** (bottom navigation bar)
+2. Tap **Server Settings**
+3. Tap the reset icon (🗑) next to the server address field
+4. Select **SSL certificates**
+5. Confirm when prompted
+6. The app will reconnect automatically and store the new certificate
+
+**On Desktop (Windows / Linux):**
+
+1. Open the **Tools** menu → **Network**
+2. Go to the **Server** tab
+3. Click **Reset SSL certificates**
+4. Confirm when prompted
+
+After resetting, Pallectrum will reconnect to the server and cache the new certificate. If the connection still fails, verify that the server address is correct and that the server is online.
