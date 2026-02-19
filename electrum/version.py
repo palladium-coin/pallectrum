@@ -1,4 +1,4 @@
-ELECTRUM_VERSION = '1.0.1'       # version of the client package (Pallectrum)
+ELECTRUM_VERSION = '1.1.0'       # version of the client package (Pallectrum)
 
 PROTOCOL_VERSION_MIN = '1.4'     # electrum protocol
 PROTOCOL_VERSION_MAX = '1.6'

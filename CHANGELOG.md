@@ -18,6 +18,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-02-19
+
+### Overview
+This release adds ARM64/aarch64 platform support, native Palladium URI scheme integration, a unified network reset feature for both desktop and Android interfaces, and several bug fixes and documentation improvements.
+
+### Added
+- **ARM64/aarch64 support**: AppImage builds now include a dedicated ARM64 variant for Linux on aarch64 hardware.
+- **ARM64 QML support**: Android/QML interface now works on ARM64 devices with pinned PyQt6 dependencies (`PyQt6>=6.7.0,<6.8.0`) to ensure compatibility where PyQt6 ≥ 6.9 is unavailable.
+- **Palladium URI scheme**: Donation flow and payment handling now use the `palladium:` URI scheme instead of `bitcoin:`.
+- **Reset SSL certificates**: New action in both Qt (Server tab) and QML (Server Settings) to delete locally cached TLS certificates and force re-fetch on reconnect. Useful when a server renews its self-signed certificate.
+- **Reset known servers**: New action alongside SSL reset to clear the list of recently used servers, available in both Qt and QML interfaces.
+- **Troubleshooting section in user guide**: Added documentation explaining SSL certificate caching, why self-signed certificates require manual reset, and step-by-step instructions for both Android and desktop.
+
+### Fixed
+- **WIF deserialization bug**: Fixed incorrect private key deserialization for Palladium network parameters.
+- **Docker build warning**: Resolved undefined `TARGETARCH` variable warning in multi-platform Docker builds.
+- **Whitepaper link**: Updated Help → White Paper URL to the correct repository (`palladium-coin/whitepaper`).
+- **Browser opening on Linux**: `webopen()` now uses `xdg-open` instead of Python's `webbrowser` module, preventing text-based browsers (e.g. `w3m`) from being selected instead of the desktop browser.
+
+### Changed
+- **README**: Updated "Running from Source" section with clear numbered steps, separate x86_64 and ARM64 dependency instructions, and improved QML optional section.
+
+---
+
 ## [1.0.1] - 2026-01-10
 
 ### Changed
