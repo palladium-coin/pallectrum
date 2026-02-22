@@ -1000,6 +1000,9 @@ class Transaction:
         if txin.is_coinbase_input():
             return b""
         assert isinstance(txin, PartialTxInput)
+        # Taproot keypath: tap_key_sig is set after signing → build witness directly
+        if txin.tap_key_sig is not None:
+            return construct_witness([txin.tap_key_sig])
 
         if not txin.is_segwit():
             return construct_witness([])
@@ -1073,7 +1076,6 @@ class Transaction:
         if txin.is_segwit():
             if txin.is_taproot():
                 scache = sighash_cache.get_witver1_data_for_tx(self)
-                sighash_epoch = b"\x00"
                 hash_type = int.to_bytes(sighash, length=1, byteorder="little", signed=False)
                 # txdata
                 preimage_txdata = bytearray()
@@ -1107,7 +1109,7 @@ class Transaction:
                         raise Exception("Using SIGHASH_SINGLE without a corresponding output") from None
                     # note: we could cache this to avoid some potential DOS vectors:
                     preimage_outputdata += sha256(txout.serialize_to_network())
-                return bytes(sighash_epoch + hash_type + preimage_txdata + preimage_inputdata + preimage_outputdata)
+                return bytes(hash_type + preimage_txdata + preimage_inputdata + preimage_outputdata)
             else:  # segwit (witness v0)
                 scache = sighash_cache.get_witver0_data_for_tx(self)
                 if not (sighash & Sighash.ANYONECANPAY):
@@ -1906,6 +1908,9 @@ class PartialTxInput(TxInput, PSBTSection):
             return True
         if self.script_sig is not None and not self.is_segwit():
             return True
+        # Taproot keypath spending is complete when tap_key_sig is present
+        if self.tap_key_sig is not None and self.is_taproot():
+            return True
         if desc := self.script_descriptor:
             try:
                 desc.satisfy(allow_dummy=False, sigdata=self.sigs_ecdsa)
@@ -2559,7 +2564,11 @@ class PartialTransaction(Transaction):
 
     def add_signature_to_txin(self, *, txin_idx: int, signing_pubkey: bytes, sig: bytes) -> None:
         txin = self._inputs[txin_idx]
-        txin.sigs_ecdsa[signing_pubkey] = sig
+        if txin.is_taproot():
+            # Taproot keypath: store in tap_key_sig (not sigs_ecdsa)
+            txin.tap_key_sig = sig
+        else:
+            txin.sigs_ecdsa[signing_pubkey] = sig
         # force re-serialization
         txin.script_sig = None
         txin.witness = None

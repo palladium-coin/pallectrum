@@ -890,6 +890,7 @@ class Test_xprv_xpub(ElectrumTestCase):
             'p2wsh-p2sh':  'Yprv',
             'p2wpkh':      'zprv',
             'p2wsh':       'Zprv',
+            'p2tr':        'zs3i',  # taproot mainnet xprv
         }
         xpub_headers_b58 = {
             'standard':    'xpub',
@@ -897,6 +898,7 @@ class Test_xprv_xpub(ElectrumTestCase):
             'p2wsh-p2sh':  'Ypub',
             'p2wpkh':      'zpub',
             'p2wsh':       'Zpub',
+            'p2tr':        'zs5o',  # taproot mainnet xpub
         }
         for xtype, xkey_header_bytes in constants.net.XPRV_HEADERS.items():
             xkey_header_bytes = bfh("%08x" % xkey_header_bytes)
@@ -929,6 +931,7 @@ class Test_xprv_xpub_testnet(ElectrumTestCase):
             'p2wsh-p2sh':  'Uprv',
             'p2wpkh':      'vprv',
             'p2wsh':       'Vprv',
+            'p2tr':        'vqaY',  # taproot testnet xprv
         }
         xpub_headers_b58 = {
             'standard':    'tpub',
@@ -936,6 +939,7 @@ class Test_xprv_xpub_testnet(ElectrumTestCase):
             'p2wsh-p2sh':  'Upub',
             'p2wpkh':      'vpub',
             'p2wsh':       'Vpub',
+            'p2tr':        'vqcf',  # taproot testnet xpub
         }
         for xtype, xkey_header_bytes in constants.net.XPRV_HEADERS.items():
             xkey_header_bytes = bfh("%08x" % xkey_header_bytes)
