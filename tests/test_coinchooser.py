@@ -109,3 +109,35 @@ class TestCoinChooser(ElectrumTestCase):
         assert tx.get_fee() == 0, f"fee should be 0, is {tx.get_fee()}"
         assert len(tx.outputs()) == 2, f"expected 2 output got {len(tx.outputs())}"
         assert len(tx.inputs()) == 1, f"expected 1 input got {len(tx.inputs())}"
+
+    def test_output_rounding_can_raise_effective_feerate(self):
+        # this reproduces the "selected 1 sat/vB, sent with ~1.3 sat/vB" behavior.
+        txin_for_rounded = self.get_dummy_txin_1_284_474_sat()
+        txin_for_exact = self.get_dummy_txin_1_284_474_sat()
+        txout = PartialTxOutput(
+            scriptpubkey=txin_for_rounded.utxo.outputs()[0].scriptpubkey,
+            value=1_000_000,
+        )
+        fee_estimator = FeePolicy('feerate:1000').estimate_fee
+
+        tx_rounded = CoinChooserPrivacy(enable_output_value_rounding=True).make_tx(
+            coins=[],
+            inputs=[txin_for_rounded],
+            outputs=[txout],
+            change_addrs=[],
+            fee_estimator_vb=fee_estimator,
+            dust_threshold=500,
+        )
+        tx_exact = CoinChooserPrivacy(enable_output_value_rounding=False).make_tx(
+            coins=[],
+            inputs=[txin_for_exact],
+            outputs=[txout],
+            change_addrs=[],
+            fee_estimator_vb=fee_estimator,
+            dust_threshold=500,
+        )
+
+        rounded_feerate = tx_rounded.get_fee() / tx_rounded.estimated_size()
+        exact_feerate = tx_exact.get_fee() / tx_exact.estimated_size()
+        assert rounded_feerate > 1.0, f"expected rounded feerate > 1 sat/vB, got {rounded_feerate}"
+        assert exact_feerate == 1.0, f"expected exact feerate == 1 sat/vB, got {exact_feerate}"

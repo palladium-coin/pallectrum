@@ -535,14 +535,20 @@ def get_name(config: 'SimpleConfig') -> str:
     return kind
 
 
-def get_coin_chooser(config: 'SimpleConfig') -> CoinChooserBase:
+def get_coin_chooser(
+    config: 'SimpleConfig',
+    *,
+    enable_output_value_rounding: bool = None,
+) -> CoinChooserBase:
     klass = COIN_CHOOSERS[get_name(config)]
+    if enable_output_value_rounding is None:
+        enable_output_value_rounding = config.WALLET_COIN_CHOOSER_OUTPUT_ROUNDING
     # note: we enable enable_output_value_rounding by default as
     #       - for sacrificing a few satoshis
     #       + it gives better privacy for the user re change output
     #       + it also helps the network as a whole as fees will become noisier
     #         (trying to counter the heuristic that "whole integer sat/byte feerates" are common)
     coinchooser = klass(
-        enable_output_value_rounding=config.WALLET_COIN_CHOOSER_OUTPUT_ROUNDING,
+        enable_output_value_rounding=enable_output_value_rounding,
     )
     return coinchooser

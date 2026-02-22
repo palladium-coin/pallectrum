@@ -2012,7 +2012,12 @@ class Abstract_Wallet(ABC, Logger, EventListener):
 
         if len(i_max) == 0:
             # Let the coin chooser select the coins to spend
-            coin_chooser = coinchooser.get_coin_chooser(self.config)
+            coin_chooser = coinchooser.get_coin_chooser(
+                self.config,
+                enable_output_value_rounding=(
+                    self.config.WALLET_COIN_CHOOSER_OUTPUT_ROUNDING and fee_policy.use_dynamic_estimates
+                ),
+            )
             # If there is an unconfirmed RBF tx, merge with it
             if base_tx:
                 # make sure we don't try to spend change from the tx-to-be-replaced:
@@ -2392,7 +2397,10 @@ class Abstract_Wallet(ABC, Logger, EventListener):
             self.add_input_info(item)
         def fee_estimator(size):
             return FeePolicy.estimate_fee_for_feerate(fee_per_kb=new_fee_rate*1000, size=size)
-        coin_chooser = coinchooser.get_coin_chooser(self.config)
+        coin_chooser = coinchooser.get_coin_chooser(
+            self.config,
+            enable_output_value_rounding=False,
+        )
         try:
             return coin_chooser.make_tx(
                 coins=coins,
