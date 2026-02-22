@@ -2716,6 +2716,8 @@ class Abstract_Wallet(ABC, Logger, EventListener):
             multi = descriptor.MultisigDescriptor(pubkeys=pubkeys, thresh=self.m, is_sorted=True)
             wsh = descriptor.WSHDescriptor(subdescriptor=multi)
             return descriptor.SHDescriptor(subdescriptor=wsh)
+        elif script_type == 'p2tr':
+            return descriptor.TRDescriptor(internal_key=pubkeys[0])
         else:
             raise NotImplementedError(f"unexpected {script_type=}")
 

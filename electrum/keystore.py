@@ -1078,7 +1078,9 @@ def xtype_from_derivation(derivation: str) -> str:
     """Returns the script type to be used for this derivation."""
     bip32_indices = convert_bip32_strpath_to_intpath(derivation)
     if len(bip32_indices) >= 1:
-        if bip32_indices[0] == 84 + BIP32_PRIME:
+        if bip32_indices[0] == 86 + BIP32_PRIME:
+            return 'p2tr'
+        elif bip32_indices[0] == 84 + BIP32_PRIME:
             return 'p2wpkh'
         elif bip32_indices[0] == 49 + BIP32_PRIME:
             return 'p2wpkh-p2sh'

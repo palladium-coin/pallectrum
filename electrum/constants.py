@@ -159,6 +159,7 @@ class BitcoinMainnet(AbstractNet):
         'p2wsh-p2sh':  0x0295b005,  # Yprv
         'p2wpkh':      0x04b2430c,  # zprv
         'p2wsh':       0x02aa7a99,  # Zprv
+        'p2tr':        0x04b30ba9,  # trpv (taproot, mainnet)
     }
     XPRV_HEADERS_INV = inv_dict(XPRV_HEADERS)
     XPUB_HEADERS = {
@@ -167,6 +168,7 @@ class BitcoinMainnet(AbstractNet):
         'p2wsh-p2sh':  0x0295b43f,  # Ypub
         'p2wpkh':      0x04b24746,  # zpub
         'p2wsh':       0x02aa7ed3,  # Zpub
+        'p2tr':        0x04b30ef7,  # trub (taproot, mainnet)
     }
     XPUB_HEADERS_INV = inv_dict(XPUB_HEADERS)
     BIP44_COIN_TYPE = 0
@@ -201,6 +203,7 @@ class Palladium(AbstractNet):
         'p2wsh-p2sh':  0x0295b005,  # Yprv
         'p2wpkh':      0x04b2430c,  # zprv
         'p2wsh':       0x02aa7a99,  # Zprv
+        'p2tr':        0x04b30ba9,  # trpv (taproot, mainnet)
     }
     XPRV_HEADERS_INV = inv_dict(XPRV_HEADERS)
     XPUB_HEADERS = {
@@ -209,6 +212,7 @@ class Palladium(AbstractNet):
         'p2wsh-p2sh':  0x0295b43f,  # Ypub
         'p2wpkh':      0x04b24746,  # zpub
         'p2wsh':       0x02aa7ed3,  # Zpub
+        'p2tr':        0x04b30ef7,  # trub (taproot, mainnet)
     }
     XPUB_HEADERS_INV = inv_dict(XPUB_HEADERS)
     BIP44_COIN_TYPE = 746  # Palladium coin type (SLIP-0044 registered)
@@ -235,6 +239,7 @@ class PalladiumTestnet(AbstractNet):
         'p2wsh-p2sh':  0x024285b5,  # Uprv
         'p2wpkh':      0x045f18bc,  # vprv
         'p2wsh':       0x02575048,  # Vprv
+        'p2tr':        0x045f5a98,  # wrpv (taproot, testnet)
     }
     XPRV_HEADERS_INV = inv_dict(XPRV_HEADERS)
     XPUB_HEADERS = {
@@ -243,6 +248,7 @@ class PalladiumTestnet(AbstractNet):
         'p2wsh-p2sh':  0x024289ef,  # Upub
         'p2wpkh':      0x045f1cf6,  # vpub
         'p2wsh':       0x02575483,  # Vpub
+        'p2tr':        0x045f5df6,  # wrub (taproot, testnet)
     }
     XPUB_HEADERS_INV = inv_dict(XPUB_HEADERS)
     BIP44_COIN_TYPE = 1

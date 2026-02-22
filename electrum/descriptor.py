@@ -804,6 +804,10 @@ class TRDescriptor(Descriptor):
     # TODO add more test vectors from BIP-0386
     def expand(self, *, pos: Optional[int] = None) -> "ExpandedScripts":
         internal_pubkey = self.pubkeys[0].get_pubkey_bytes(pos=pos)
+        # taproot_output_script requires a 32-byte x-only pubkey (BIP-340);
+        # strip the prefix byte if a compressed 33-byte pubkey is provided
+        if len(internal_pubkey) == 33:
+            internal_pubkey = internal_pubkey[1:]
         script_tree = None
         if self.desc_tree:
             def transform(tree_node):
@@ -818,6 +822,13 @@ class TRDescriptor(Descriptor):
         return ExpandedScripts(
             output_script=output_script,
         )
+
+    def satisfy(self, *, sigdata=None, allow_dummy=False) -> ScriptSolutionTop:
+        assert not self.is_range()
+        if allow_dummy:
+            # 64-byte dummy Schnorr sig for fee size estimation (DEFAULT sighash, no suffix)
+            return ScriptSolutionTop(witness=construct_witness([bytes(64)]), script_sig=b"")
+        raise MissingSolutionPiece("taproot keypath sig not in sigdata; use tap_key_sig")
 
     def get_max_tree_depth(self) -> Optional[int]:
         if not self.desc_tree:
@@ -1045,6 +1056,8 @@ def get_singlesig_descriptor_from_legacy_leaf(*, pubkey: str, script_type: str) 
     elif script_type == 'p2wpkh-p2sh':
         wpkh = WPKHDescriptor(pubkey=pubkey)
         return SHDescriptor(subdescriptor=wpkh)
+    elif script_type == 'p2tr':
+        return TRDescriptor(internal_key=pubkey)
     else:
         raise NotLegacySinglesigScriptType(f"unexpected {script_type=}")
 
@@ -1063,6 +1076,8 @@ def create_dummy_descriptor_from_address(addr: Optional[str]) -> 'Descriptor':
             return 'p2wpkh'  # the default guess
         witver, witprog = segwit_addr.decode_segwit_address(constants.net.SEGWIT_HRP, addr)
         if witprog is not None:
+            if witver == 1 and len(witprog) == 32:
+                return 'p2tr'
             return 'p2wpkh'
         addrtype, hash_160_ = bitcoin.b58_address_to_hash160(addr)
         if addrtype == constants.net.ADDRTYPE_P2PKH:
