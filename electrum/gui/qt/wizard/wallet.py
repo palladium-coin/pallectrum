@@ -706,6 +706,8 @@ class WCScriptAndDerivation(WalletWizardComponent, Logger):
                            extra_data=bip44_derivation(0, bip43_purpose=49)),
                 ChoiceItem(key='p2wpkh', label='native segwit (p2wpkh)',
                            extra_data=bip44_derivation(0, bip43_purpose=84)),
+                ChoiceItem(key='p2tr', label='taproot (p2tr)',
+                           extra_data=bip44_derivation(0, bip43_purpose=86)),
             ]
 
         if self.wizard_data['wallet_type'] == 'standard' and not self.wizard_data['keystore_type'] == 'hardware':

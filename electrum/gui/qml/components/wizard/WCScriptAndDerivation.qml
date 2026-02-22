@@ -29,7 +29,8 @@ WizardComponent {
         return {
             'p2pkh': 44,
             'p2wpkh-p2sh': 49,
-            'p2wpkh': 84
+            'p2wpkh': 84,
+            'p2tr': 86
         }
     }
 
@@ -127,6 +128,13 @@ WizardComponent {
                 property string scripttype: 'p2wpkh'
                 checked: !isMultisig
                 text: qsTr('native segwit (p2wpkh)')
+                visible: !isMultisig
+            }
+            ElRadioButton {
+                Layout.fillWidth: true
+                ButtonGroup.group: scripttypegroup
+                property string scripttype: 'p2tr'
+                text: qsTr('taproot (p2tr)')
                 visible: !isMultisig
             }
 
