@@ -1125,7 +1125,6 @@ class TestSighashBIP143(ElectrumTestCase):
 
 class TestSighashBIP341(ElectrumTestCase):
 
-    @unittest.skip("BIP-341 standard includes sighash epoch byte (0x00); Palladium does not")
     def test_taproot_keypath_spending(self):
         test_vector_file = os.path.join(os.path.dirname(__file__), "bip-0341", "wallet-test-vectors.json")
         with open(test_vector_file, "r") as f:

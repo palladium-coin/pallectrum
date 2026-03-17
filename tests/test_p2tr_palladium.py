@@ -556,3 +556,53 @@ class TestP2TRAdvancedSigning(ElectrumTestCase):
         txin.witness_utxo = TxOutput(scriptpubkey=txout.scriptpubkey, value=txout.value + 1)
         with self.assertRaises(PSBTInputConsistencyFailure):
             txin.utxo = prev_tx
+
+
+class TestP2TRVerifySig(ElectrumTestCase):
+    """Test verify_sig_for_txin per taproot keypath spending."""
+
+    def _build_and_sign(self, sighash=Sighash.DEFAULT):
+        privkey_bytes, internal_pubkey = _make_internal_keypair()
+        output_script = taproot_output_script(internal_pubkey, script_tree=None)
+        dummy_txid = bytes(range(32))
+        txin = PartialTxInput(prevout=TxOutpoint(txid=dummy_txid, out_idx=0))
+        txin.witness_utxo = TxOutput(scriptpubkey=output_script, value=100_000)
+        txin.sighash = sighash
+        privkey2 = ecc.ECPrivkey.from_secret_scalar(_TEST_SECRET_SCALAR + 1)
+        output_script2 = taproot_output_script(privkey2.get_public_key_bytes(compressed=True)[1:], script_tree=None)
+        txout = PartialTxOutput(scriptpubkey=output_script2, value=99_000)
+        tx = PartialTransaction.from_io([txin], [txout], version=2)
+        sig = tx.sign_txin(0, privkey_bytes)
+        _, tweaked_pubkey_xonly = taproot_tweak_pubkey(internal_pubkey, b"")
+        return tx, sig, tweaked_pubkey_xonly
+
+    def test_verify_sig_taproot_default_sighash_xonly(self):
+        """verify_sig_for_txin ritorna True con firma valida (DEFAULT, pubkey x-only 32 byte)."""
+        tx, sig, tweaked_xonly = self._build_and_sign(Sighash.DEFAULT)
+        self.assertEqual(len(sig), 64)
+        self.assertTrue(tx.verify_sig_for_txin(txin_index=0, pubkey_bytes=tweaked_xonly, sig=sig))
+
+    def test_verify_sig_taproot_default_sighash_compressed(self):
+        """verify_sig_for_txin ritorna True con pubkey compressa (33 byte, 0x02 prefix)."""
+        tx, sig, tweaked_xonly = self._build_and_sign(Sighash.DEFAULT)
+        tweaked_compressed = b"\x02" + tweaked_xonly
+        self.assertTrue(tx.verify_sig_for_txin(txin_index=0, pubkey_bytes=tweaked_compressed, sig=sig))
+
+    def test_verify_sig_taproot_sighash_all(self):
+        """verify_sig_for_txin ritorna True con SIGHASH_ALL (65 byte)."""
+        tx, sig, tweaked_xonly = self._build_and_sign(Sighash.ALL)
+        self.assertEqual(len(sig), 65)
+        self.assertTrue(tx.verify_sig_for_txin(txin_index=0, pubkey_bytes=tweaked_xonly, sig=sig))
+
+    def test_verify_sig_taproot_wrong_pubkey(self):
+        """verify_sig_for_txin ritorna False con pubkey sbagliata."""
+        tx, sig, _ = self._build_and_sign(Sighash.DEFAULT)
+        wrong_privkey = ecc.ECPrivkey.from_secret_scalar(999)
+        _, wrong_xonly = taproot_tweak_pubkey(wrong_privkey.get_public_key_bytes(compressed=True)[1:], b"")
+        self.assertFalse(tx.verify_sig_for_txin(txin_index=0, pubkey_bytes=wrong_xonly, sig=sig))
+
+    def test_verify_sig_taproot_corrupted_sig(self):
+        """verify_sig_for_txin ritorna False con firma corrotta."""
+        tx, sig, tweaked_xonly = self._build_and_sign(Sighash.DEFAULT)
+        corrupted = bytes([sig[0] ^ 0xFF]) + sig[1:]
+        self.assertFalse(tx.verify_sig_for_txin(txin_index=0, pubkey_bytes=tweaked_xonly, sig=corrupted))

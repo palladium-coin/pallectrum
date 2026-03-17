@@ -1076,6 +1076,7 @@ class Transaction:
         if txin.is_segwit():
             if txin.is_taproot():
                 scache = sighash_cache.get_witver1_data_for_tx(self)
+                sighash_epoch = b"\x00"
                 hash_type = int.to_bytes(sighash, length=1, byteorder="little", signed=False)
                 # txdata
                 preimage_txdata = bytearray()
@@ -1109,7 +1110,7 @@ class Transaction:
                         raise Exception("Using SIGHASH_SINGLE without a corresponding output") from None
                     # note: we could cache this to avoid some potential DOS vectors:
                     preimage_outputdata += sha256(txout.serialize_to_network())
-                return bytes(hash_type + preimage_txdata + preimage_inputdata + preimage_outputdata)
+                return bytes(sighash_epoch + hash_type + preimage_txdata + preimage_inputdata + preimage_outputdata)
             else:  # segwit (witness v0)
                 scache = sighash_cache.get_witver0_data_for_tx(self)
                 if not (sighash & Sighash.ANYONECANPAY):
@@ -1158,7 +1159,21 @@ class Transaction:
     ) -> bool:
         txin = self.inputs()[txin_index]
         if txin.is_taproot():
-            raise Exception("not implemented")  # TODO
+            # sig is 64 bytes for DEFAULT sighash, 65 bytes otherwise (last byte = sighash type)
+            if len(sig) == 65:
+                sighash = sig[-1]
+                sig64 = sig[:64]
+            else:
+                sighash = Sighash.DEFAULT
+                sig64 = sig
+            pre_hash = self.serialize_preimage(txin_index, sighash=sighash, sighash_cache=sighash_cache)
+            msg_hash = bip340_tagged_hash(b"TapSighash", pre_hash)
+            # pubkey_bytes is the x-only output pubkey (32 bytes) or compressed (33 bytes)
+            if len(pubkey_bytes) == 32:
+                pubkey = ecc.ECPubkey(b"\x02" + pubkey_bytes)
+            else:
+                pubkey = ecc.ECPubkey(pubkey_bytes)
+            return pubkey.schnorr_verify(sig64, msg_hash)
         else:
             der_sig, sighash = sig[:-1], sig[-1]
             pre_hash = self.serialize_preimage(txin_index, sighash=sighash, sighash_cache=sighash_cache)
