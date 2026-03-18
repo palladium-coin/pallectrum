@@ -1175,6 +1175,7 @@ class Transaction:
         pubkey_bytes: bytes,
         sig: bytes,
         sighash_cache: SighashCache = None,
+        tapscript: Optional[Tuple[int, bytes]] = None,
     ) -> bool:
         txin = self.inputs()[txin_index]
         if txin.is_taproot():
@@ -1185,9 +1186,11 @@ class Transaction:
             else:
                 sighash = Sighash.DEFAULT
                 sig64 = sig
-            pre_hash = self.serialize_preimage(txin_index, sighash=sighash, sighash_cache=sighash_cache)
+            pre_hash = self.serialize_preimage(
+                txin_index, sighash=sighash, sighash_cache=sighash_cache, tapscript=tapscript
+            )
             msg_hash = bip340_tagged_hash(b"TapSighash", pre_hash)
-            # pubkey_bytes is the x-only output pubkey (32 bytes) or compressed (33 bytes)
+            # pubkey_bytes is the x-only leaf pubkey (32 bytes) or compressed (33 bytes)
             if len(pubkey_bytes) == 32:
                 pubkey = ecc.ECPubkey(b"\x02" + pubkey_bytes)
             else:

@@ -273,6 +273,31 @@ class TestTaprootMultisigSigning(ElectrumTestCase):
         self.assertIsNone(txin.tap_key_sig, "tap_key_sig must be None for script path spend")
         self.assertGreater(len(txin.tap_script_sigs), 0, "tap_script_sigs must have entries")
 
+    def test_verify_sig_for_txin_tapscript(self):
+        """verify_sig_for_txin with tapscript= verifies a script-path signature."""
+        tx, leaf_pairs, tr_desc = _make_multisig_tx(100, [1, 2, 3], 2)
+        priv1, compressed1 = leaf_pairs[0]
+        keypairs = {compressed1: priv1}
+        tx.sign(keypairs)
+        txin = tx.inputs()[0]
+        # Retrieve the signature and leaf info stored by sign()
+        self.assertGreater(len(txin.tap_script_sigs), 0)
+        (xonly1, leaf_hash), sig = next(iter(txin.tap_script_sigs.items()))
+        # Reconstruct tapscript tuple from the descriptor
+        leaf_script = tr_desc.subdescriptors[0].expand().scriptcode_for_sighash
+        tapscript_info = (0xc0, leaf_script)
+        # verify_sig_for_txin must return True for the correct pubkey
+        result = tx.verify_sig_for_txin(
+            txin_index=0, pubkey_bytes=xonly1, sig=sig, tapscript=tapscript_info
+        )
+        self.assertTrue(result, "Script-path sig verification must succeed")
+        # And False for a wrong sig
+        bad_sig = bytes(64)
+        result_bad = tx.verify_sig_for_txin(
+            txin_index=0, pubkey_bytes=xonly1, sig=bad_sig, tapscript=tapscript_info
+        )
+        self.assertFalse(result_bad, "Corrupted sig must fail verification")
+
 
 class TestTapscriptPSBT(ElectrumTestCase):
     """PSBT round-trip for tapscript fields."""
