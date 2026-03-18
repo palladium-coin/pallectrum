@@ -32,7 +32,10 @@ import electrum_ecc as ecc
 
 from .bip32 import convert_bip32_strpath_to_intpath, BIP32Node, KeyOriginInfo, BIP32_PRIME
 from . import bitcoin
-from .bitcoin import construct_script, opcodes, construct_witness, taproot_output_script
+from .bitcoin import (
+    construct_script, opcodes, construct_witness, taproot_output_script,
+    multisig_tapscript_script, control_block_for_taproot_script_spend, taproot_tree_helper,
+)
 from . import constants
 from .crypto import hash_160, sha256
 from . import segwit_addr
@@ -663,6 +666,78 @@ class MultisigDescriptor(Descriptor):
         return self
 
 
+# 64-byte dummy Schnorr signature for fee size estimation (DEFAULT sighash)
+DUMMY_SCHNORR_SIG = bytes(64)
+
+
+class MultiADescriptor(Descriptor):
+    """
+    A descriptor for ``multi_a()`` and ``sortedmulti_a()`` tapscript descriptors (BIP 342/386).
+    Used inside ``tr()`` for k-of-n multisig via OP_CHECKSIGADD.
+
+    Script: <pk1> OP_CHECKSIG <pk2> OP_CHECKSIGADD ... <pkn> OP_CHECKSIGADD k OP_EQUAL
+    Witness (bottom→top): [sig_pkn_or_empty, ..., sig_pk1_or_empty]
+    """
+    def __init__(
+        self,
+        pubkeys: List['PubkeyProvider'],
+        thresh: int,
+        is_sorted: bool = False,
+    ) -> None:
+        super().__init__(pubkeys, [], "sortedmulti_a" if is_sorted else "multi_a")
+        if not (1 <= thresh <= len(pubkeys)):
+            raise ValueError(f'{thresh=}, {len(pubkeys)=}')
+        self.thresh = thresh
+        self.is_sorted = is_sorted
+        if self.is_sorted and not self.is_range():
+            der_pks = [p.get_pubkey_bytes() for p in self.pubkeys]
+            self.pubkeys = [x[1] for x in sorted(zip(der_pks, self.pubkeys))]
+
+    def to_string_no_checksum(self) -> str:
+        return "{}({},{})".format(self.name, self.thresh, ",".join([p.to_string() for p in self.pubkeys]))
+
+    def expand(self, *, pos: Optional[int] = None) -> "ExpandedScripts":
+        der_pks = [p.get_pubkey_bytes(pos=pos) for p in self.pubkeys]
+        if self.is_sorted:
+            der_pks.sort()
+        script = multisig_tapscript_script(self.thresh, der_pks)
+        return ExpandedScripts(output_script=script, scriptcode_for_sighash=script)
+
+    def _satisfy_inner(self, *, sigdata=None, allow_dummy=False) -> 'ScriptSolutionInner':
+        """Returns witness items for script path spend (signatures in reverse key order)."""
+        if sigdata is None:
+            sigdata = {}
+        assert not self.is_range()
+        der_pks = [p.get_pubkey_bytes() for p in self.pubkeys]
+        if self.is_sorted:
+            der_pks.sort()
+        # Collect one sig per pubkey (or empty bytes if not available)
+        # Witness order is REVERSED: last key's sig at bottom, first key's sig at top
+        items = []
+        found = 0
+        for pk in reversed(der_pks):
+            xonly = pk[1:] if len(pk) == 33 else pk
+            if (sig := sigdata.get(xonly)) or (sig := sigdata.get(pk)):
+                items.append(sig)
+                found += 1
+            else:
+                items.append(b"" if not allow_dummy else DUMMY_SCHNORR_SIG)
+        if not allow_dummy and found < self.thresh:
+            raise MissingSolutionPiece(f"multi_a: need {self.thresh} sigs, got {found}")
+        return ScriptSolutionInner(witness_items=tuple(items))
+
+    def get_satisfaction_progress(self, *, sigdata=None) -> Tuple[int, int]:
+        if sigdata is None:
+            sigdata = {}
+        der_pks = [p.get_pubkey_bytes() for p in self.pubkeys]
+        found = 0
+        for pk in der_pks:
+            xonly = pk[1:] if len(pk) == 33 else pk
+            if xonly in sigdata or pk in sigdata:
+                found += 1
+        return found, self.thresh
+
+
 class SHDescriptor(Descriptor):
     """
     A descriptor for ``sh()`` descriptors
@@ -823,12 +898,43 @@ class TRDescriptor(Descriptor):
             output_script=output_script,
         )
 
-    def satisfy(self, *, sigdata=None, allow_dummy=False) -> ScriptSolutionTop:
+    def satisfy(self, *, sigdata=None, allow_dummy=False) -> 'ScriptSolutionTop':
         assert not self.is_range()
         if allow_dummy:
             # 64-byte dummy Schnorr sig for fee size estimation (DEFAULT sighash, no suffix)
             return ScriptSolutionTop(witness=construct_witness([bytes(64)]), script_sig=b"")
-        raise MissingSolutionPiece("taproot keypath sig not in sigdata; use tap_key_sig")
+        # Script path: try each leaf in the tree in order
+        if self.desc_tree:
+            internal_pubkey = self.pubkeys[0].get_pubkey_bytes()
+            if len(internal_pubkey) == 33:
+                internal_pubkey = internal_pubkey[1:]
+            def build_script_tree(tree_node):
+                if isinstance(tree_node, Descriptor):
+                    return (0xc0, tree_node.expand().scriptcode_for_sighash)
+                return [build_script_tree(tree_node[0]), build_script_tree(tree_node[1])]
+            script_tree = build_script_tree(self.desc_tree)
+            flat_leaves, _ = taproot_tree_helper(script_tree)
+            flat_descs = []
+            def flatten_descs(tree_node):
+                if isinstance(tree_node, Descriptor):
+                    flat_descs.append(tree_node)
+                else:
+                    flatten_descs(tree_node[0])
+                    flatten_descs(tree_node[1])
+            flatten_descs(self.desc_tree)
+            for script_num, leaf_desc in enumerate(flat_descs):
+                try:
+                    inner = leaf_desc._satisfy_inner(sigdata=sigdata, allow_dummy=False)
+                except MissingSolutionPiece:
+                    continue
+                leaf_script, control_block = control_block_for_taproot_script_spend(
+                    internal_pubkey=internal_pubkey,
+                    script_tree=script_tree,
+                    script_num=script_num,
+                )
+                witness_items = list(inner.witness_items) + [leaf_script, control_block]
+                return ScriptSolutionTop(witness=construct_witness(witness_items), script_sig=b"")
+        raise MissingSolutionPiece("taproot: no keypath sig and no satisfiable script leaf")
 
     def get_max_tree_depth(self) -> Optional[int]:
         if not self.desc_tree:

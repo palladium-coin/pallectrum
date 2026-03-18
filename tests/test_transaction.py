@@ -137,7 +137,7 @@ class TestTransaction(ElectrumTestCase):
         self.assertEqual('3140eb24b43386f35ba69e3875eb6c93130ac66201d01c58f598defc949a5c2a:0', tx.inputs()[0].prevout.to_str())
         self.assertEqual(1, len(tx.outputs()))
         self.assertEqual(bfh('76a914230ac37834073a42146f11ef8414ae929feaafc388ac'), tx.outputs()[0].scriptpubkey)
-        self.assertEqual('14CHYaaByjJZpx4oHBpfDMdqhTyXnZ3kVs', tx.outputs()[0].address)
+        self.assertEqual('PBnThYy32enkonjZdG9BtFc7KD9QsF1WkC', tx.outputs()[0].address)
         self.assertEqual(1000000, tx.outputs()[0].value)
 
         self.assertEqual(tx.serialize(), signed_blob)
@@ -153,10 +153,10 @@ class TestTransaction(ElectrumTestCase):
 
     def test_estimated_output_size(self):
         estimated_output_size = transaction.Transaction.estimated_output_size_for_address
-        self.assertEqual(estimated_output_size('14gcRovpkCoGkCNBivQBvw7eso7eiNAbxG'), 34)
+        self.assertEqual(estimated_output_size('PCGnanKfo8HTj32x4ziibq5vVYHXnRvjWq'), 34)
         self.assertEqual(estimated_output_size('35ZqQJcBQMZ1rsv8aSuJ2wkC7ohUCQMJbT'), 32)
-        self.assertEqual(estimated_output_size('bc1q3g5tmkmlvxryhh843v4dz026avatc0zzr6h3af'), 31)
-        self.assertEqual(estimated_output_size('bc1qnvks7gfdu72de8qv6q6rhkkzu70fqz4wpjzuxjf6aydsx7wxfwcqnlxuv3'), 43)
+        self.assertEqual(estimated_output_size('plm1q3g5tmkmlvxryhh843v4dz026avatc0zzfx9sh2'), 31)
+        self.assertEqual(estimated_output_size('plm1qnvks7gfdu72de8qv6q6rhkkzu70fqz4wpjzuxjf6aydsx7wxfwcq5kk25h'), 43)
 
     # TODO other tests for segwit tx
     def test_tx_signed_segwit(self):
@@ -185,18 +185,18 @@ class TestTransaction(ElectrumTestCase):
         addr_from_script = lambda script: transaction.get_address_from_output_script(bfh(script))
 
         # bech32/bech32m native segwit
-        # test vectors from BIP-0173/BIP-0350
-        self.assertEqual('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4', addr_from_script('0014751e76e8199196d454941c45d1b3a323f1433bd6'))
-        self.assertEqual('bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y', addr_from_script('5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6'))
-        self.assertEqual('bc1sw50qgdz25j', addr_from_script('6002751e'))
-        self.assertEqual('bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs', addr_from_script('5210751e76e8199196d454941c45d1b3a323'))
-        self.assertEqual('bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0', addr_from_script('512079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798'))
+        # test vectors from BIP-0173/BIP-0350 re-encoded with PLM hrp
+        self.assertEqual('plm1qw508d6qejxtdg4y5r3zarvary0c5xw7kxmmspk', addr_from_script('0014751e76e8199196d454941c45d1b3a323f1433bd6'))
+        self.assertEqual('plm1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kwp46x6', addr_from_script('5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6'))
+        self.assertEqual('plm1sw50qgf7s5k', addr_from_script('6002751e'))
+        self.assertEqual('plm1zw508d6qejxtdg4y5r3zarvaryvf9mh4q', addr_from_script('5210751e76e8199196d454941c45d1b3a323'))
+        self.assertEqual('plm1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq9lyy2f', addr_from_script('512079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798'))
         # almost but not quite
         self.assertEqual(None, addr_from_script('0013751e76e8199196d454941c45d1b3a323f1433b'))
 
-        # base58 p2pkh
-        self.assertEqual('14gcRovpkCoGkCNBivQBvw7eso7eiNAbxG', addr_from_script('76a91428662c67561b95c79d2257d2a93d9d151c977e9188ac'))
-        self.assertEqual('1BEqfzh4Y3zzLosfGhw1AsqbEKVW6e1qHv', addr_from_script('76a914704f4b81cadb7bf7e68c08cd3657220f680f863c88ac'))
+        # base58 p2pkh (Palladium ADDRTYPE_P2PKH = 55, addresses start with 'P')
+        self.assertEqual('PCGnanKfo8HTj32x4ziibq5vVYHXnRvjWq', addr_from_script('76a91428662c67561b95c79d2257d2a93d9d151c977e9188ac'))
+        self.assertEqual('PJq1py5uayVBKeYRcnFXqmorr4fPAz9Pqm', addr_from_script('76a914704f4b81cadb7bf7e68c08cd3657220f680f863c88ac'))
         # almost but not quite
         self.assertEqual(None, addr_from_script('76a9130000000000000000000000000000000000000088ac'))
 
@@ -879,7 +879,8 @@ class TestTransactionTestnet(ElectrumTestCase):
 
     def test_spending_op_cltv_p2sh(self):
         # from https://github.com/brianddk/reddit/blob/8ca383c9e00cb5a4c1201d1bab534d5886d3cb8f/python/elec-p2sh-hodl.py
-        wif = 'cQNjiPwYKMBr2oB3bWzf3rgBsu198xb8Nxxe51k6D3zVTA98L25N'
+        # WIF re-encoded with Palladium testnet prefix (0xFF)
+        wif = 'p2pkh:emepryhw7or3d5PLSjJwneByrrDaVevkz2vj2HHc4i3sxTQ1FkSY'
         sats = 9999
         sats_less_fees = sats - 200
         locktime = 1602565200
@@ -897,7 +898,7 @@ class TestTransactionTestnet(ElectrumTestCase):
 
         # Build the Transaction Output
         txout = PartialTxOutput.from_address_and_value(
-            'tb1qv9hg20f0g08d460l67ph6p4ukwt7m0ttqzj7mk', sats_less_fees)
+            'tplm1qv9hg20f0g08d460l67ph6p4ukwt7m0tth2c9ev', sats_less_fees)
 
         # Build and sign the transaction
         tx = PartialTransaction.from_io([txin], [txout], locktime=locktime, version=1)
@@ -910,7 +911,8 @@ class TestTransactionTestnet(ElectrumTestCase):
                          tx.txid())
 
     def test_spending_op_cltv_p2wsh(self):
-        wif = 'cSw3py1CQa2tmzzDm3ghQVrgqqNuFhUyBXjABge5j8KRxzd6kaFj'
+        # WIF re-encoded with Palladium testnet prefix (0xFF)
+        wif = 'p2pkh:epD8yYmbD2h6NHCWcFzz9HNUpnbLcPpbnbhF8xBbanNpUHos6MFQ'
         sats = 99_878
         sats_less_fees = sats - 300
         locktime = 1602572140
@@ -922,7 +924,7 @@ class TestTransactionTestnet(ElectrumTestCase):
             locktime, opcodes.OP_CHECKLOCKTIMEVERIFY, opcodes.OP_DROP, pubkey, opcodes.OP_CHECKSIG,
         ])
         from_addr = bitcoin.script_to_p2wsh(witness_script)
-        self.assertEqual("tb1q9dn6qke9924xe3zmptmhrdge0s043pjxpjndypgnu2t9fvsd4crs2qjuer", from_addr)
+        self.assertEqual("tplm1q9dn6qke9924xe3zmptmhrdge0s043pjxpjndypgnu2t9fvsd4crs3wsmyl", from_addr)
         prevout = TxOutpoint(txid=bfh('8680971efd5203025cffe746f8598d0a704fae81f236ffe009c2609ec673d59a'), out_idx=0)
         txin = PartialTxInput(prevout=prevout)
         txin._trusted_value_sats = sats
@@ -932,7 +934,7 @@ class TestTransactionTestnet(ElectrumTestCase):
 
         # Build the Transaction Output
         txout = PartialTxOutput.from_address_and_value(
-            'tb1qtgsfkgptcxdn6dz6wh8c4dguk3cezwne5j5c47', sats_less_fees)
+            'tplm1qtgsfkgptcxdn6dz6wh8c4dguk3cezwner67rhy', sats_less_fees)
 
         # Build and sign the transaction
         tx = PartialTransaction.from_io([txin], [txout], locktime=locktime, version=2)

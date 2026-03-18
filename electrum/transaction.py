@@ -46,12 +46,12 @@ from .util import to_bytes, bfh, chunks, is_hex_str, parse_max_spend
 from .bitcoin import (
     TYPE_ADDRESS, TYPE_SCRIPT, hash_160, hash160_to_p2sh, hash160_to_p2pkh, hash_to_segwit_addr, var_int,
     TOTAL_COIN_SUPPLY_LIMIT_IN_BTC, COIN, opcodes, base_decode, base_encode, construct_witness, construct_script,
-    taproot_tweak_seckey
+    taproot_tweak_seckey, witness_push,
 )
 from .crypto import sha256d, sha256
 from .logging import get_logger
 from .util import ShortID, OldTaskGroup
-from .descriptor import Descriptor, MissingSolutionPiece, create_dummy_descriptor_from_address
+from .descriptor import Descriptor, MissingSolutionPiece, create_dummy_descriptor_from_address, TRDescriptor
 
 if TYPE_CHECKING:
     from .wallet import Abstract_Wallet
@@ -1003,6 +1003,15 @@ class Transaction:
         # Taproot keypath: tap_key_sig is set after signing → build witness directly
         if txin.tap_key_sig is not None:
             return construct_witness([txin.tap_key_sig])
+        # Taproot script path: build witness from tap_script_sigs via descriptor
+        if txin.tap_script_sigs and isinstance(txin.script_descriptor, TRDescriptor):
+            combined = {xonly: sig for (xonly, _lh), sig in txin.tap_script_sigs.items()}
+            try:
+                sol = txin.script_descriptor.satisfy(sigdata=combined, allow_dummy=estimate_size)
+                if sol.witness is not None:
+                    return sol.witness
+            except MissingSolutionPiece:
+                pass
 
         if not txin.is_segwit():
             return construct_witness([])
@@ -1057,6 +1066,7 @@ class Transaction:
         *,
         sighash: Optional[int] = None,
         sighash_cache: SighashCache = None,
+        tapscript: Optional[Tuple[int, bytes]] = None,  # (leaf_version, leaf_script) for script-path
     ) -> bytes:
         nVersion = int.to_bytes(self.version, length=4, byteorder="little", signed=True)
         nLocktime = int.to_bytes(self.locktime, length=4, byteorder="little", signed=False)
@@ -1091,7 +1101,8 @@ class Transaction:
                     preimage_txdata += scache.sha_outputs
                 # inputdata
                 preimage_inputdata = bytearray()
-                spend_type = bytes([0])  # (ext_flag * 2) + annex_present
+                ext_flag = 1 if tapscript is not None else 0
+                spend_type = bytes([ext_flag * 2])  # (ext_flag * 2) + annex_present
                 preimage_inputdata += spend_type
                 if sighash & 0x80 == Sighash.ANYONECANPAY:
                     preimage_inputdata += txin.prevout.serialize_to_network()
@@ -1101,6 +1112,14 @@ class Transaction:
                 else:
                     preimage_inputdata += int.to_bytes(txin_index, length=4, byteorder="little", signed=False)
                 # TODO sha_annex
+                # tapscript extension (BIP342): tapleaf_hash, key_version, codesep_pos
+                if tapscript is not None:
+                    leaf_version, leaf_script = tapscript
+                    tapleaf_preimage = bytes([leaf_version]) + witness_push(leaf_script)
+                    tapleaf_hash = bip340_tagged_hash(b"TapLeaf", tapleaf_preimage)
+                    preimage_inputdata += tapleaf_hash
+                    preimage_inputdata += bytes([0])  # key_version = 0x00
+                    preimage_inputdata += int.to_bytes(0xFFFFFFFF, 4, 'little')  # codesep_pos: no OP_CODESEPARATOR
                 # outputdata
                 preimage_outputdata = bytearray()
                 if sighash & 3 == Sighash.SINGLE:
@@ -1559,6 +1578,9 @@ class PSBTInputType(IntEnum):
     FINAL_SCRIPTSIG = 7
     FINAL_SCRIPTWITNESS = 8
     TAP_KEY_SIG = 0x13
+    TAP_SCRIPT_SIG = 0x14    # key: xonly_pubkey(32) + leaf_hash(32), val: sig
+    TAP_LEAF_SCRIPT = 0x15   # key: control_block, val: script + leaf_version
+    TAP_INTERNAL_KEY = 0x17  # key: empty, val: xonly_pubkey(32)
     TAP_MERKLE_ROOT = 0x18
     SLIP19_OWNERSHIP_PROOF = 0x19
 
@@ -1656,6 +1678,9 @@ class PartialTxInput(TxInput, PSBTSection):
         self._witness_utxo = None  # type: Optional[TxOutput]
         self.sigs_ecdsa = {}  # type: Dict[bytes, bytes]  # pubkey -> sig
         self.tap_key_sig = None  # type: Optional[bytes]  # sig for taproot key-path-spending
+        self.tap_script_sigs = {}  # type: Dict[Tuple[bytes, bytes], bytes]  # (xonly_pubkey, leaf_hash) -> sig
+        self.tap_scripts = {}  # type: Dict[bytes, Tuple[bytes, int]]  # control_block -> (script, leaf_version)
+        self.tap_internal_key = None  # type: Optional[bytes]  # x-only internal pubkey (32 bytes)
         self.sighash = None  # type: Optional[int]  # note: wrong abstraction level. should be per-signature
         self.bip32_paths = {}  # type: Dict[bytes, Tuple[bytes, Sequence[int]]]  # pubkey -> (xpub_fingerprint, path)
         self.redeem_script = None  # type: Optional[bytes]
@@ -1806,6 +1831,27 @@ class PartialTxInput(TxInput, PSBTSection):
                 raise SerializationError(f"value for {repr(kt)} has unexpected length: {len(val)}")
             self.tap_key_sig = val
             if key: raise SerializationError(f"key for {repr(kt)} must be empty")
+        elif kt == PSBTInputType.TAP_SCRIPT_SIG:
+            if len(key) != 64:
+                raise SerializationError(f"key for {repr(kt)} must be 64 bytes (xonly+leaf_hash), got {len(key)}")
+            if len(val) not in (64, 65):
+                raise SerializationError(f"value for {repr(kt)} has unexpected length: {len(val)}")
+            xonly, leaf_hash = key[:32], key[32:]
+            self.tap_script_sigs[(xonly, leaf_hash)] = val
+        elif kt == PSBTInputType.TAP_LEAF_SCRIPT:
+            # key = control_block, val = script + leaf_version (1 byte at end)
+            if len(val) < 1:
+                raise SerializationError(f"value for {repr(kt)} too short")
+            leaf_version = val[-1]
+            script = val[:-1]
+            self.tap_scripts[key] = (script, leaf_version)
+        elif kt == PSBTInputType.TAP_INTERNAL_KEY:
+            if self.tap_internal_key is not None:
+                raise SerializationError(f"duplicate key: {repr(kt)}")
+            if len(val) != 32:
+                raise SerializationError(f"value for {repr(kt)} must be 32 bytes, got {len(val)}")
+            self.tap_internal_key = val
+            if key: raise SerializationError(f"key for {repr(kt)} must be empty")
         elif kt == PSBTInputType.TAP_MERKLE_ROOT:
             if self.tap_merkle_root is not None:
                 raise SerializationError(f"duplicate key: {repr(kt)}")
@@ -1866,6 +1912,12 @@ class PartialTxInput(TxInput, PSBTSection):
             wr(PSBTInputType.PARTIAL_SIG, val, pk)
         if self.tap_key_sig is not None:
             wr(PSBTInputType.TAP_KEY_SIG, self.tap_key_sig)
+        for (xonly, leaf_hash), sig in sorted(self.tap_script_sigs.items()):
+            wr(PSBTInputType.TAP_SCRIPT_SIG, sig, xonly + leaf_hash)
+        for ctrl_block, (script, leaf_version) in sorted(self.tap_scripts.items()):
+            wr(PSBTInputType.TAP_LEAF_SCRIPT, script + bytes([leaf_version]), ctrl_block)
+        if self.tap_internal_key is not None:
+            wr(PSBTInputType.TAP_INTERNAL_KEY, self.tap_internal_key)
         if self.tap_merkle_root is not None:
             wr(PSBTInputType.TAP_MERKLE_ROOT, self.tap_merkle_root)
         if self.sighash is not None:
@@ -1927,8 +1979,11 @@ class PartialTxInput(TxInput, PSBTSection):
         if self.tap_key_sig is not None and self.is_taproot():
             return True
         if desc := self.script_descriptor:
+            # Merge ecdsa sigs and tapscript sigs (keyed by xonly pubkey) for satisfy()
+            combined_sigdata = {**self.sigs_ecdsa,
+                                **{xonly: sig for (xonly, _lh), sig in self.tap_script_sigs.items()}}
             try:
-                desc.satisfy(allow_dummy=False, sigdata=self.sigs_ecdsa)
+                desc.satisfy(allow_dummy=False, sigdata=combined_sigdata)
             except MissingSolutionPiece:
                 pass
             else:
@@ -1937,7 +1992,9 @@ class PartialTxInput(TxInput, PSBTSection):
 
     def get_satisfaction_progress(self) -> Tuple[int, int]:
         if desc := self.script_descriptor:
-            return desc.get_satisfaction_progress(sigdata=self.sigs_ecdsa)
+            combined_sigdata = {**self.sigs_ecdsa,
+                                **{xonly: sig for (xonly, _lh), sig in self.tap_script_sigs.items()}}
+            return desc.get_satisfaction_progress(sigdata=combined_sigdata)
         return 0, 0
 
     def finalize(self) -> None:
@@ -1946,6 +2003,9 @@ class PartialTxInput(TxInput, PSBTSection):
             #           input key-value map should be cleared from the PSBT"
             self.sigs_ecdsa = {}
             self.tap_key_sig = None
+            self.tap_script_sigs = {}
+            self.tap_scripts = {}
+            self.tap_internal_key = None
             self.tap_merkle_root = None
             self.sighash = None
             self.bip32_paths = {}
@@ -1977,6 +2037,10 @@ class PartialTxInput(TxInput, PSBTSection):
                 self.sighash = other_txin.sighash
             if other_txin.tap_key_sig is not None:
                 self.tap_key_sig = other_txin.tap_key_sig
+            self.tap_script_sigs.update(other_txin.tap_script_sigs)
+            self.tap_scripts.update(other_txin.tap_scripts)
+            if other_txin.tap_internal_key is not None:
+                self.tap_internal_key = other_txin.tap_internal_key
             if other_txin.tap_merkle_root is not None:
                 self.tap_merkle_root = other_txin.tap_merkle_root
             self.bip32_paths.update(other_txin.bip32_paths)
@@ -2187,6 +2251,27 @@ class PartialTxOutput(TxOutput, PSBTSection):
             self.witness_script = other_txout.witness_script
         self.bip32_paths.update(other_txout.bip32_paths)
         self._unknown.update(other_txout._unknown)
+
+
+def _find_tapscript_for_pubkey(
+    desc: 'TRDescriptor', pubkey_xonly: bytes
+) -> Optional[Tuple[int, bytes]]:
+    """Given a TRDescriptor and a x-only pubkey, returns (leaf_version, leaf_script) for the
+    first leaf that contains that pubkey, or None if not found."""
+    from .descriptor import TRDescriptor as _TRD
+    def _search(tree_node):
+        if isinstance(tree_node, Descriptor):
+            leaf_pks = [pk[1:] if len(pk) == 33 else pk for pk in tree_node.get_all_pubkeys()]
+            if pubkey_xonly in leaf_pks:
+                return (0xc0, tree_node.expand().scriptcode_for_sighash)
+            return None
+        result = _search(tree_node[0])
+        if result is None:
+            result = _search(tree_node[1])
+        return result
+    if not desc.desc_tree:
+        return None
+    return _search(desc.desc_tree)
 
 
 class PartialTransaction(Transaction):
@@ -2479,8 +2564,18 @@ class PartialTransaction(Transaction):
                     continue
                 _logger.info(f"adding signature for {pubkey.hex()}. spending utxo {txin.prevout.to_str()}")
                 sec = keypairs[pubkey]
-                sig = self.sign_txin(i, sec, sighash_cache=sighash_cache)
-                self.add_signature_to_txin(txin_idx=i, signing_pubkey=pubkey, sig=sig)
+                # For taproot with a script tree, determine keypath vs script path
+                tapscript_info = None
+                if txin.is_taproot() and isinstance(txin.script_descriptor, TRDescriptor):
+                    desc = txin.script_descriptor
+                    internal_pk = desc.pubkeys[0].get_pubkey_bytes()
+                    internal_xonly = internal_pk[1:] if len(internal_pk) == 33 else internal_pk
+                    pubkey_xonly = pubkey[1:] if len(pubkey) == 33 else pubkey
+                    if pubkey_xonly != internal_xonly and desc.desc_tree:
+                        # Script path: find the leaf containing this pubkey
+                        tapscript_info = _find_tapscript_for_pubkey(desc, pubkey_xonly)
+                sig = self.sign_txin(i, sec, sighash_cache=sighash_cache, tapscript=tapscript_info)
+                self.add_signature_to_txin(txin_idx=i, signing_pubkey=pubkey, sig=sig, tapscript=tapscript_info)
 
         _logger.debug(f"tx.sign() finished. is_complete={self.is_complete()}")
         self.invalidate_ser_cache()
@@ -2491,19 +2586,28 @@ class PartialTransaction(Transaction):
         privkey_bytes: bytes,
         *,
         sighash_cache: SighashCache = None,
+        tapscript: Optional[Tuple[int, bytes]] = None,  # (leaf_version, leaf_script) for script-path
     ) -> bytes:
         txin = self.inputs()[txin_index]
         txin.validate_data(for_signing=True)
-        pre_hash = self.serialize_preimage(txin_index, sighash_cache=sighash_cache)
         if txin.is_taproot():
-            # note: privkey_bytes is the internal key
-            merkle_root = txin.tap_merkle_root or bytes()
-            output_privkey_bytes = taproot_tweak_seckey(privkey_bytes, merkle_root)
-            output_privkey = ecc.ECPrivkey(output_privkey_bytes)
-            msg_hash = bip340_tagged_hash(b"TapSighash", pre_hash)
-            sig = output_privkey.schnorr_sign(msg_hash)
+            if tapscript is not None:
+                # Script path (tapscript): sign directly with the leaf key, no tweak
+                pre_hash = self.serialize_preimage(txin_index, sighash_cache=sighash_cache, tapscript=tapscript)
+                msg_hash = bip340_tagged_hash(b"TapSighash", pre_hash)
+                privkey = ecc.ECPrivkey(privkey_bytes)
+                sig = privkey.schnorr_sign(msg_hash)
+            else:
+                # Keypath: sign with tweaked output key
+                pre_hash = self.serialize_preimage(txin_index, sighash_cache=sighash_cache)
+                merkle_root = txin.tap_merkle_root or bytes()
+                output_privkey_bytes = taproot_tweak_seckey(privkey_bytes, merkle_root)
+                output_privkey = ecc.ECPrivkey(output_privkey_bytes)
+                msg_hash = bip340_tagged_hash(b"TapSighash", pre_hash)
+                sig = output_privkey.schnorr_sign(msg_hash)
             sighash = txin.sighash if txin.sighash is not None else Sighash.DEFAULT
         else:
+            pre_hash = self.serialize_preimage(txin_index, sighash_cache=sighash_cache)
             privkey = ecc.ECPrivkey(privkey_bytes)
             msg_hash = sha256d(pre_hash)
             sig = privkey.ecdsa_sign(msg_hash, sigencode=ecc.ecdsa_der_sig_from_r_and_s)
@@ -2577,11 +2681,22 @@ class PartialTransaction(Transaction):
         # redo raw
         self.invalidate_ser_cache()
 
-    def add_signature_to_txin(self, *, txin_idx: int, signing_pubkey: bytes, sig: bytes) -> None:
+    def add_signature_to_txin(
+        self, *, txin_idx: int, signing_pubkey: bytes, sig: bytes,
+        tapscript: Optional[Tuple[int, bytes]] = None,
+    ) -> None:
         txin = self._inputs[txin_idx]
         if txin.is_taproot():
-            # Taproot keypath: store in tap_key_sig (not sigs_ecdsa)
-            txin.tap_key_sig = sig
+            if tapscript is not None:
+                # Script path: store indexed by (xonly_pubkey, leaf_hash)
+                leaf_version, leaf_script = tapscript
+                tapleaf_preimage = bytes([leaf_version]) + witness_push(leaf_script)
+                leaf_hash = bip340_tagged_hash(b"TapLeaf", tapleaf_preimage)
+                xonly = signing_pubkey[1:] if len(signing_pubkey) == 33 else signing_pubkey
+                txin.tap_script_sigs[(xonly, leaf_hash)] = sig
+            else:
+                # Keypath: store in tap_key_sig
+                txin.tap_key_sig = sig
         else:
             txin.sigs_ecdsa[signing_pubkey] = sig
         # force re-serialization

@@ -177,6 +177,7 @@ class opcodes(IntEnum):
     OP_CHECKSIGVERIFY = 0xad
     OP_CHECKMULTISIG = 0xae
     OP_CHECKMULTISIGVERIFY = 0xaf
+    OP_CHECKSIGADD = 0xba  # BIP 342 tapscript
 
     # expansion
     OP_NOP1 = 0xb0
@@ -830,6 +831,26 @@ def taproot_tree_helper(script_tree: TapTree):
     if right_h < left_h:
         left_h, right_h = right_h, left_h
     return ret, bip340_tagged_hash(b"TapBranch", left_h + right_h)
+
+
+def multisig_tapscript_script(thresh: int, pubkeys: Sequence[bytes]) -> bytes:
+    """Returns the tapscript for multi_a(thresh, pk1, ..., pkn) per BIP342/BIP386.
+
+    Script: <pk1> OP_CHECKSIG <pk2> OP_CHECKSIGADD ... <pkn> OP_CHECKSIGADD thresh OP_EQUAL
+
+    Spending witness stack (bottom to top): [sig_pkn_or_empty, ..., sig_pk1_or_empty]
+    i.e. the signature for key i is at witness position (n - i), reversed relative to key order.
+    """
+    assert 1 <= thresh <= len(pubkeys), f"{thresh=}, {len(pubkeys)=}"
+    items = []
+    for i, pk in enumerate(pubkeys):
+        if len(pk) == 33:
+            pk = pk[1:]  # strip prefix byte to get x-only 32-byte pubkey
+        items.append(pk)
+        items.append(opcodes.OP_CHECKSIG if i == 0 else opcodes.OP_CHECKSIGADD)
+    items.append(thresh)
+    items.append(opcodes.OP_EQUAL)
+    return construct_script(items)
 
 
 def taproot_output_script(internal_pubkey: bytes, *, script_tree: Optional[TapTree]) -> bytes:
